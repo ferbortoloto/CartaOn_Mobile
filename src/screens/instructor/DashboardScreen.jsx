@@ -2,11 +2,13 @@ import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
   ScrollView, Image, Platform, Alert, Animated, Dimensions, PanResponder,
+  TextInput, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSchedule } from '../../context/ScheduleContext';
+import { usePlans } from '../../context/PlansContext';
 import LeafletMapView from '../../components/shared/LeafletMapView';
 
 const PRIMARY = '#820AD1';
@@ -22,6 +24,17 @@ const TYPE_COLOR = {
   'Aula Teórica': { bg: '#EFF6FF', text: '#2563EB' },
   'Simulado':     { bg: '#FFF7ED', text: '#EA580C' },
 };
+
+const CLASS_TYPES = ['Aula Prática', 'Aula Teórica', 'Misto'];
+
+const CLASS_TYPE_ICON = {
+  'Aula Prática': 'car-outline',
+  'Aula Teórica': 'book-outline',
+  'Misto':        'grid-outline',
+};
+
+// Instructor ID for mock — must match IDs in src/data/instructors.js ('1' = Maria Santos)
+const DEMO_INSTRUCTOR_ID = '1';
 
 const INITIAL_REQUESTS = [
   {
@@ -95,19 +108,56 @@ const NOTIF_STYLE = {
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
   const { addEvent, addContact } = useSchedule();
+  const { getInstructorPlans, togglePlan, addPlan } = usePlans();
+
   const [requests, setRequests] = useState(INITIAL_REQUESTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [panelExpanded, setPanelExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'plans'
+  const [showNewPlanModal, setShowNewPlanModal] = useState(false);
+
+  // New plan form state
+  const [newPlanName, setNewPlanName] = useState('');
+  const [newPlanDesc, setNewPlanDesc] = useState('');
+  const [newPlanCount, setNewPlanCount] = useState('5');
+  const [newPlanPrice, setNewPlanPrice] = useState('');
+  const [newPlanValidity, setNewPlanValidity] = useState('60');
+  const [newPlanType, setNewPlanType] = useState('Aula Prática');
 
   const panelHeight = useRef(new Animated.Value(EXPANDED_H)).current;
   const settledHeight = useRef(EXPANDED_H);
 
+  const instructorPlans = getInstructorPlans(DEMO_INSTRUCTOR_ID);
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const acceptedRequests = requests.filter(r => r.status === 'accepted');
   const unreadCount = notifications.filter(n => !n.read).length;
   const estimatedRevenue = acceptedRequests.reduce((s, r) => s + r.price, 0);
+
+  const handleSaveNewPlan = () => {
+    if (!newPlanName.trim() || !newPlanPrice.trim()) {
+      Alert.alert('Campos obrigatórios', 'Por favor, preencha nome e preço do plano.');
+      return;
+    }
+    addPlan({
+      instructorId: DEMO_INSTRUCTOR_ID,
+      name: newPlanName.trim(),
+      description: newPlanDesc.trim(),
+      classCount: parseInt(newPlanCount, 10) || 5,
+      classType: newPlanType,
+      price: parseFloat(newPlanPrice.replace(',', '.')) || 0,
+      validityDays: parseInt(newPlanValidity, 10) || 60,
+    });
+    setNewPlanName('');
+    setNewPlanDesc('');
+    setNewPlanCount('5');
+    setNewPlanPrice('');
+    setNewPlanValidity('60');
+    setNewPlanType('Aula Prática');
+    setShowNewPlanModal(false);
+    Alert.alert('Plano criado!', 'Seu novo plano já está disponível para os alunos.');
+  };
 
   const animateTo = (toValue, expanded) => {
     settledHeight.current = toValue;
@@ -267,20 +317,40 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── Section header ── */}
+        {/* ── Tab switcher ── */}
         {panelExpanded && (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Aguardando resposta</Text>
-            {pendingRequests.length > 0 && (
-              <View style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>{pendingRequests.length}</Text>
+          <View style={styles.tabSwitcher}>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'requests' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('requests')}
+            >
+              <Ionicons name="notifications-outline" size={13} color={activeTab === 'requests' ? PRIMARY : '#9CA3AF'} />
+              <Text style={[styles.tabBtnText, activeTab === 'requests' && styles.tabBtnTextActive]}>
+                Solicitações
+              </Text>
+              {pendingRequests.length > 0 && (
+                <View style={styles.tabBadge}>
+                  <Text style={styles.tabBadgeText}>{pendingRequests.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === 'plans' && styles.tabBtnActive]}
+              onPress={() => setActiveTab('plans')}
+            >
+              <Ionicons name="layers-outline" size={13} color={activeTab === 'plans' ? PRIMARY : '#9CA3AF'} />
+              <Text style={[styles.tabBtnText, activeTab === 'plans' && styles.tabBtnTextActive]}>
+                Planos
+              </Text>
+              <View style={[styles.tabBadge, { backgroundColor: '#F5F0FF' }]}>
+                <Text style={[styles.tabBadgeText, { color: PRIMARY }]}>{instructorPlans.length}</Text>
               </View>
-            )}
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* ── Request cards (vertical) ── */}
-        {panelExpanded && (
+        {/* ── REQUESTS TAB ── */}
+        {panelExpanded && activeTab === 'requests' && (
           pendingRequests.length === 0 ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
@@ -304,11 +374,8 @@ export default function DashboardScreen({ navigation }) {
                     onPress={() => setSelectedRequest(req)}
                     activeOpacity={0.88}
                   >
-                    {/* Left accent */}
                     <View style={styles.reqAccent} />
-
                     <View style={styles.reqBody}>
-                      {/* Row 1: avatar + name + price */}
                       <View style={styles.reqTopRow}>
                         <Image source={{ uri: req.studentAvatar }} style={styles.reqAvatar} />
                         <View style={styles.reqNameBlock}>
@@ -325,14 +392,10 @@ export default function DashboardScreen({ navigation }) {
                         </View>
                         <Text style={styles.reqPrice}>R$ {req.price}</Text>
                       </View>
-
-                      {/* Row 2: location */}
                       <View style={styles.reqLocRow}>
                         <Ionicons name="location-outline" size={12} color="#9CA3AF" />
                         <Text style={styles.reqLocText} numberOfLines={1}>{req.location}</Text>
                       </View>
-
-                      {/* Row 3: distance + time + ago */}
                       <View style={styles.reqMetaRow}>
                         <Ionicons name="navigate-outline" size={11} color="#6B7280" />
                         <Text style={styles.reqMetaText}>{req.distance}</Text>
@@ -341,27 +404,16 @@ export default function DashboardScreen({ navigation }) {
                         <Text style={styles.reqMetaText}>{req.estimatedTime}</Text>
                         <Text style={styles.reqAgo}>{req.requestTime}</Text>
                       </View>
-
-                      {/* Row 4: quick actions */}
                       <View style={styles.reqActions}>
-                        <TouchableOpacity
-                          style={styles.rejectBtn}
-                          onPress={() => handleRejectRequest(req.id)}
-                        >
+                        <TouchableOpacity style={styles.rejectBtn} onPress={() => handleRejectRequest(req.id)}>
                           <Ionicons name="close" size={13} color="#EF4444" />
                           <Text style={styles.rejectBtnText}>Recusar</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.acceptBtn}
-                          onPress={() => handleAcceptRequest(req.id)}
-                        >
+                        <TouchableOpacity style={styles.acceptBtn} onPress={() => handleAcceptRequest(req.id)}>
                           <Ionicons name="checkmark" size={13} color="#FFF" />
                           <Text style={styles.acceptBtnText}>Aceitar</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.detailBtn}
-                          onPress={() => setSelectedRequest(req)}
-                        >
+                        <TouchableOpacity style={styles.detailBtn} onPress={() => setSelectedRequest(req)}>
                           <Text style={styles.detailBtnText}>Detalhes</Text>
                           <Ionicons name="chevron-forward" size={12} color={PRIMARY} />
                         </TouchableOpacity>
@@ -373,7 +425,173 @@ export default function DashboardScreen({ navigation }) {
             </ScrollView>
           )
         )}
+
+        {/* ── PLANS TAB ── */}
+        {panelExpanded && activeTab === 'plans' && (
+          <ScrollView
+            style={styles.cardsList}
+            contentContainerStyle={styles.cardsContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header row */}
+            <View style={styles.plansHeader}>
+              <Text style={styles.plansHeaderText}>
+                {instructorPlans.filter(p => p.isActive).length} plano{instructorPlans.filter(p => p.isActive).length !== 1 ? 's' : ''} ativo{instructorPlans.filter(p => p.isActive).length !== 1 ? 's' : ''}
+              </Text>
+              <TouchableOpacity style={styles.newPlanBtn} onPress={() => setShowNewPlanModal(true)}>
+                <Ionicons name="add" size={14} color="#FFF" />
+                <Text style={styles.newPlanBtnText}>Novo Plano</Text>
+              </TouchableOpacity>
+            </View>
+
+            {instructorPlans.length === 0 ? (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Ionicons name="layers-outline" size={28} color={PRIMARY} />
+                </View>
+                <Text style={styles.emptyTitle}>Sem planos</Text>
+                <Text style={styles.emptyText}>Crie planos de aulas para atrair mais alunos.</Text>
+              </View>
+            ) : (
+              instructorPlans.map(plan => {
+                const pricePerClass = (plan.price / plan.classCount).toFixed(0);
+                return (
+                  <View key={plan.id} style={[styles.planCard, !plan.isActive && styles.planCardInactive]}>
+                    <View style={styles.planCardLeft}>
+                      <View style={[styles.planIconBox, { opacity: plan.isActive ? 1 : 0.4 }]}>
+                        <Ionicons name={CLASS_TYPE_ICON[plan.classType] || 'layers-outline'} size={18} color={PRIMARY} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.planCardName, !plan.isActive && styles.planCardNameInactive]}>
+                          {plan.name}
+                        </Text>
+                        <View style={styles.planCardMeta}>
+                          <Text style={styles.planCardMetaText}>{plan.classCount} aulas · {plan.validityDays} dias</Text>
+                          <View style={styles.metaDot} />
+                          <Text style={styles.planCardMetaText}>{plan.classType}</Text>
+                        </View>
+                        <View style={styles.planCardPriceRow}>
+                          <Text style={[styles.planCardPrice, !plan.isActive && { color: '#9CA3AF' }]}>
+                            R$ {plan.price}
+                          </Text>
+                          <Text style={styles.planCardPriceSub}>R$ {pricePerClass}/aula</Text>
+                          {plan.purchasedBy > 0 && (
+                            <View style={styles.purchasedPill}>
+                              <Ionicons name="people-outline" size={10} color="#6B7280" />
+                              <Text style={styles.purchasedPillText}>{plan.purchasedBy}</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                    <Switch
+                      value={plan.isActive}
+                      onValueChange={() => togglePlan(plan.id)}
+                      trackColor={{ false: '#E5E7EB', true: `#820AD160` }}
+                      thumbColor={plan.isActive ? PRIMARY : '#9CA3AF'}
+                    />
+                  </View>
+                );
+              })
+            )}
+          </ScrollView>
+        )}
       </Animated.View>
+
+      {/* ── NEW PLAN MODAL ── */}
+      <Modal visible={showNewPlanModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowNewPlanModal(false)}>
+        <SafeAreaView style={styles.modalSafe}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Novo Plano</Text>
+            <TouchableOpacity onPress={() => setShowNewPlanModal(false)} style={styles.closeBtn}>
+              <Ionicons name="close" size={22} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 16 }}>
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Nome do plano *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Ex: Pacote Iniciante"
+                placeholderTextColor="#9CA3AF"
+                value={newPlanName}
+                onChangeText={setNewPlanName}
+              />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Descrição</Text>
+              <TextInput
+                style={[styles.formInput, { height: 72, textAlignVertical: 'top' }]}
+                placeholder="Descreva o que está incluso..."
+                placeholderTextColor="#9CA3AF"
+                value={newPlanDesc}
+                onChangeText={setNewPlanDesc}
+                multiline
+              />
+            </View>
+
+            <Text style={styles.formLabel}>Tipo de aula</Text>
+            <View style={styles.typeSelector}>
+              {CLASS_TYPES.map(t => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.typeSelectorBtn, newPlanType === t && styles.typeSelectorBtnActive]}
+                  onPress={() => setNewPlanType(t)}
+                >
+                  <Ionicons name={CLASS_TYPE_ICON[t]} size={14} color={newPlanType === t ? PRIMARY : '#6B7280'} />
+                  <Text style={[styles.typeSelectorText, newPlanType === t && styles.typeSelectorTextActive]}>{t}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.formRow}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.formLabel}>Nº de aulas</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="5"
+                  placeholderTextColor="#9CA3AF"
+                  value={newPlanCount}
+                  onChangeText={setNewPlanCount}
+                  keyboardType="number-pad"
+                />
+              </View>
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.formLabel}>Validade (dias)</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="60"
+                  placeholderTextColor="#9CA3AF"
+                  value={newPlanValidity}
+                  onChangeText={setNewPlanValidity}
+                  keyboardType="number-pad"
+                />
+              </View>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Preço total (R$) *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Ex: 390,00"
+                placeholderTextColor="#9CA3AF"
+                value={newPlanPrice}
+                onChangeText={setNewPlanPrice}
+                keyboardType="decimal-pad"
+              />
+            </View>
+          </ScrollView>
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.modalRejectBtn} onPress={() => setShowNewPlanModal(false)}>
+              <Text style={styles.modalRejectText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalAcceptBtn} onPress={handleSaveNewPlan}>
+              <Ionicons name="checkmark-circle-outline" size={18} color="#FFF" />
+              <Text style={styles.modalAcceptText}>Salvar Plano</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
 
       {/* ── NOTIFICATIONS MODAL ── */}
       <Modal visible={showNotifications} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowNotifications(false)}>
@@ -587,6 +805,79 @@ const styles = StyleSheet.create({
   acceptBtnText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
   detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 'auto' },
   detailBtnText: { fontSize: 12, color: PRIMARY, fontWeight: '600' },
+
+  // ── Tab switcher ──
+  tabSwitcher: {
+    flexDirection: 'row', marginHorizontal: 14, marginTop: 8, marginBottom: 4,
+    backgroundColor: '#F3F4F6', borderRadius: 12, padding: 3, gap: 3,
+  },
+  tabBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 5, borderRadius: 10, paddingVertical: 7,
+  },
+  tabBtnActive: { backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
+  tabBtnText: { fontSize: 12, fontWeight: '600', color: '#9CA3AF' },
+  tabBtnTextActive: { color: PRIMARY, fontWeight: '700' },
+  tabBadge: { backgroundColor: '#FEE2E2', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
+  tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#EF4444' },
+
+  // ── Plans tab ──
+  plansHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  plansHeaderText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
+  newPlanBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: PRIMARY, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6,
+  },
+  newPlanBtnText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
+
+  planCard: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFF', borderRadius: 14,
+    borderWidth: 1, borderColor: '#F3F4F6', padding: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+    gap: 10,
+  },
+  planCardInactive: { backgroundColor: '#FAFAFA', opacity: 0.7 },
+  planCardLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  planIconBox: {
+    width: 38, height: 38, borderRadius: 10, backgroundColor: `#820AD115`,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  planCardName: { fontSize: 13, fontWeight: '700', color: '#111827' },
+  planCardNameInactive: { color: '#9CA3AF' },
+  planCardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  planCardMetaText: { fontSize: 11, color: '#9CA3AF' },
+  planCardPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  planCardPrice: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  planCardPriceSub: { fontSize: 10, color: '#9CA3AF' },
+  purchasedPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  purchasedPillText: { fontSize: 10, color: '#6B7280', fontWeight: '600' },
+
+  // ── Form (new plan modal) ──
+  formGroup: { gap: 6 },
+  formRow: { flexDirection: 'row', gap: 12 },
+  formLabel: { fontSize: 12, fontWeight: '700', color: '#374151', textTransform: 'uppercase', letterSpacing: 0.3 },
+  formInput: {
+    backgroundColor: '#F9FAFB', borderRadius: 12,
+    borderWidth: 1, borderColor: '#E5E7EB',
+    paddingHorizontal: 14, paddingVertical: 11,
+    fontSize: 14, color: '#111827',
+  },
+  typeSelector: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  typeSelectorBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
+  },
+  typeSelectorBtnActive: { borderColor: PRIMARY, backgroundColor: '#F5F0FF' },
+  typeSelectorText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
+  typeSelectorTextActive: { color: PRIMARY, fontWeight: '700' },
 
   // ── Empty state ──
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 24 },

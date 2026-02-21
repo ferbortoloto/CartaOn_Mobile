@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useChat } from '../context/ChatContext';
 import UserDashboardScreen from '../screens/user/UserDashboardScreen';
 import InstructorDetailScreen from '../screens/user/InstructorDetailScreen';
+import PlanCheckoutScreen from '../screens/user/PlanCheckoutScreen';
 import ChatScreen from '../screens/instructor/ChatScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 
@@ -18,6 +19,7 @@ function MapStackNavigator() {
     <MapStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <MapStack.Screen name="UserDashboard" component={UserDashboardScreen} />
       <MapStack.Screen name="InstructorDetail" component={InstructorDetailScreen} />
+      <MapStack.Screen name="PlanCheckout" component={PlanCheckoutScreen} />
     </MapStack.Navigator>
   );
 }

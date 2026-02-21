@@ -6,8 +6,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AvailabilityViewer from '../../components/user/AvailabilityViewer';
+import { usePlans } from '../../context/PlansContext';
 
 const PRIMARY = '#820AD1';
+
+const CLASS_TYPE_ICON = {
+  'Aula Prática': 'car-outline',
+  'Aula Teórica': 'book-outline',
+  'Misto':        'grid-outline',
+};
 
 const REVIEWS = [
   { id: '1', author: 'Lucas M.', rating: 5, text: 'Excelente instrutora! Muito paciente e didática.', date: 'Jan 2026' },
@@ -32,24 +39,33 @@ function StarRow({ rating, size = 14, color = '#EAB308' }) {
 
 export default function InstructorDetailScreen({ route, navigation }) {
   const { instructor } = route.params;
+  const { getActivePlans } = usePlans();
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+
+  const plans = getActivePlans(instructor.id);
 
   const catColor = instructor.licenseCategory === 'A' ? '#EA580C' : '#2563EB';
 
   const handleSchedule = () => {
     if (selectedSlots.length === 0) {
-      Alert.alert('Selecione um horário', 'Por favor, selecione pelo menos um horário disponível.');
+      if (Platform.OS === 'web') {
+        window.alert('Por favor, selecione pelo menos um horário disponível.');
+      } else {
+        Alert.alert('Selecione um horário', 'Por favor, selecione pelo menos um horário disponível.');
+      }
       return;
     }
     const dateStr = selectedDate
       ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
       : '';
-    Alert.alert(
-      'Aula Solicitada!',
-      `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\n\nAguarde a confirmação do instrutor.`,
-      [{ text: 'OK', onPress: () => navigation.goBack() }],
-    );
+    const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\n\nAguarde a confirmação do instrutor.`;
+    if (Platform.OS === 'web') {
+      window.alert(`Aula Solicitada!\n\n${msg}`);
+      navigation.goBack();
+    } else {
+      Alert.alert('Aula Solicitada!', msg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
+    }
   };
 
   return (
@@ -122,6 +138,68 @@ export default function InstructorDetailScreen({ route, navigation }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sobre o Instrutor</Text>
             <Text style={styles.bioText}>{instructor.bio}</Text>
+          </View>
+        )}
+
+        {/* Plans */}
+        {plans.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Planos disponíveis</Text>
+            <Text style={styles.sectionSub}>Economize contratando um pacote de aulas</Text>
+            {plans.map(plan => {
+              const originalTotal = instructor.pricePerHour * plan.classCount;
+              const savings = originalTotal - plan.price;
+              const discountPct = Math.round((savings / originalTotal) * 100);
+              const pricePerClass = (plan.price / plan.classCount).toFixed(0);
+              return (
+                <View key={plan.id} style={styles.planCard}>
+                  <View style={styles.planCardTop}>
+                    <View style={styles.planIconBox}>
+                      <Ionicons name={CLASS_TYPE_ICON[plan.classType] || 'layers-outline'} size={20} color={PRIMARY} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.planName}>{plan.name}</Text>
+                      <Text style={styles.planDesc} numberOfLines={2}>{plan.description}</Text>
+                    </View>
+                    {discountPct > 0 && (
+                      <View style={styles.discountBadge}>
+                        <Text style={styles.discountBadgeText}>-{discountPct}%</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.planChipsRow}>
+                    <View style={styles.planChip}>
+                      <Ionicons name="school-outline" size={11} color={PRIMARY} />
+                      <Text style={styles.planChipText}>{plan.classCount} aulas</Text>
+                    </View>
+                    <View style={[styles.planChip, { backgroundColor: '#EFF6FF' }]}>
+                      <Ionicons name="time-outline" size={11} color="#2563EB" />
+                      <Text style={[styles.planChipText, { color: '#2563EB' }]}>{plan.validityDays} dias</Text>
+                    </View>
+                    <View style={[styles.planChip, { backgroundColor: '#FFF7ED' }]}>
+                      <Ionicons name="layers-outline" size={11} color="#EA580C" />
+                      <Text style={[styles.planChipText, { color: '#EA580C' }]}>{plan.classType}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.planFooter}>
+                    <View>
+                      <Text style={styles.planPrice}>R$ {plan.price}</Text>
+                      <Text style={styles.planPriceSub}>R$ {pricePerClass}/aula</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.planContractBtn}
+                      onPress={() => navigation.navigate('PlanCheckout', { plan, instructor })}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="bag-outline" size={14} color="#FFF" />
+                      <Text style={styles.planContractBtnText}>Contratar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -236,6 +314,36 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 4 },
   sectionSub: { fontSize: 12, color: '#9CA3AF', marginBottom: 12 },
   bioText: { fontSize: 14, color: '#374151', lineHeight: 21 },
+
+  // Plans
+  planCard: {
+    borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 14, marginTop: 14, gap: 10,
+  },
+  planCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  planIconBox: {
+    width: 40, height: 40, borderRadius: 12, backgroundColor: `#820AD115`,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  planName: { fontSize: 14, fontWeight: '800', color: '#111827' },
+  planDesc: { fontSize: 12, color: '#6B7280', lineHeight: 17, marginTop: 2 },
+  discountBadge: { backgroundColor: '#16A34A', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start' },
+  discountBadgeText: { fontSize: 11, fontWeight: '800', color: '#FFF' },
+  planChipsRow: { flexDirection: 'row', gap: 6 },
+  planChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#F5F0FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+  },
+  planChipText: { fontSize: 11, fontWeight: '700', color: '#820AD1' },
+  planFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
+  planPrice: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  planPriceSub: { fontSize: 11, color: '#9CA3AF', marginTop: 1 },
+  planContractBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#820AD1', borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 10,
+    shadowColor: '#820AD1', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+  },
+  planContractBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
 
   reviewCard: {
     borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 12, marginTop: 12,
