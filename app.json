@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "CartaOn",
+    "slug": "cartaon-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#820AD1"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cartaon.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#820AD1"
+      },
+      "package": "com.cartaon.mobile"
+    },
+    "web": {},
+    "plugins": [
+      "expo-font",
+      "expo-asset"
+    ]
+  }
+}
