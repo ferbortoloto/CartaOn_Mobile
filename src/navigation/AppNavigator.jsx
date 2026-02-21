@@ -3,6 +3,7 @@ import { View, ActivityIndicator, Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
 import InstructorTabNavigator from './InstructorTabNavigator';
 import UserTabNavigator from './UserTabNavigator';
 
@@ -22,7 +23,10 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: Platform.OS === 'web' ? 'none' : 'fade' }}>
       {!isAuthenticated ? (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+        </>
       ) : user?.role === 'instructor' ? (
         <Stack.Screen name="InstructorTabs" component={InstructorTabNavigator} />
       ) : (

@@ -74,6 +74,39 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  const register = async (formData) => {
+    const { name, email, phone, cpf, birthdate, role, photoUri,
+      licenseCategory, instructorRegNum, carModel, pricePerHour, bio } = formData;
+
+    const id = `${role}_${Date.now()}`;
+    const avatarName = encodeURIComponent(name);
+    const newUser = {
+      id,
+      name,
+      email,
+      phone,
+      cpf,
+      birthdate,
+      role,
+      avatar: photoUri || `https://ui-avatars.com/api/?name=${avatarName}&background=820AD1&color=fff&size=200`,
+      ...(role === 'instructor' ? {
+        licenseCategory,
+        instructorRegNum,
+        carModel,
+        pricePerHour: parseFloat(pricePerHour) || 80,
+        bio,
+        rating: 0,
+        reviewsCount: 0,
+        isVerified: false,
+      } : {}),
+    };
+
+    await AsyncStorage.setItem('instrutorgo_user', JSON.stringify(newUser));
+    setUser(newUser);
+    setIsAuthenticated(true);
+    return { success: true, user: newUser };
+  };
+
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('instrutorgo_user');
@@ -85,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

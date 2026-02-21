@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -120,6 +120,13 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
+            <TouchableOpacity style={styles.registerLink} onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.registerLinkText}>
+                  Ainda não tem conta?{' '}
+                  <Text style={styles.registerLinkBold}>Criar conta</Text>
+                </Text>
+              </TouchableOpacity>
+
             <Text style={styles.footer}>CartaOn © {new Date().getFullYear()}</Text>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -172,5 +179,8 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  footer: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: 24, fontSize: 12 },
+  registerLink: { alignItems: 'center', marginTop: 20 },
+  registerLinkText: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
+  registerLinkBold: { fontWeight: '700', color: '#FFF' },
+  footer: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: 16, fontSize: 12 },
 });
