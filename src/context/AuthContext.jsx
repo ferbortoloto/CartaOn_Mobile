@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (formData) => {
     const { name, email, phone, cpf, birthdate, role, photoUri,
-      licenseCategory, instructorRegNum, carModel, pricePerHour, bio } = formData;
+      licenseCategory, instructorRegNum, carModel, carOptions, pricePerHour, bio } = formData;
 
     const id = `${role}_${Date.now()}`;
     const avatarName = encodeURIComponent(name);
@@ -93,6 +93,7 @@ export const AuthProvider = ({ children }) => {
         licenseCategory,
         instructorRegNum,
         carModel,
+        carOptions,
         pricePerHour: parseFloat(pricePerHour) || 80,
         bio,
         rating: 0,

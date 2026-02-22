@@ -74,14 +74,14 @@ export default function ContactList() {
 
           {item.email && (
             <View style={styles.contactDetail}>
-              <Ionicons name="mail-outline" size={12} color="#9CA3AF" />
+              <Ionicons name="mail-outline" size={14} color="#9CA3AF" />
               <Text style={styles.contactDetailText} numberOfLines={1}>{item.email}</Text>
             </View>
           )}
 
           {item.phone && (
             <View style={styles.contactDetail}>
-              <Ionicons name="call-outline" size={12} color="#9CA3AF" />
+              <Ionicons name="call-outline" size={14} color="#9CA3AF" />
               <Text style={styles.contactDetailText}>{item.phone}</Text>
             </View>
           )}
@@ -176,25 +176,25 @@ const styles = StyleSheet.create({
     shadowColor: PRIMARY, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
   },
 
-  list: { padding: 12, paddingTop: 4, paddingBottom: 32 },
+  list: { padding: 14, paddingTop: 6, paddingBottom: 32 },
   contactCard: {
     flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: '#FFF', borderRadius: 14, padding: 12, gap: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 4, elevation: 2,
+    backgroundColor: '#FFF', borderRadius: 16, padding: 16, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
-  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  avatarText: { fontSize: 18, fontWeight: '800' },
+  avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  avatarText: { fontSize: 20, fontWeight: '800' },
   contactInfo: { flex: 1 },
-  contactTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  contactName: { fontSize: 15, fontWeight: '700', color: '#111827', flex: 1 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginLeft: 6 },
+  contactTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  contactName: { fontSize: 16, fontWeight: '700', color: '#111827', flex: 1 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginLeft: 6 },
   statusText: { fontSize: 11, fontWeight: '700' },
-  contactDetail: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-  contactDetailText: { fontSize: 12, color: '#6B7280', flex: 1 },
-  contactNotes: { fontSize: 11, color: '#9CA3AF', fontStyle: 'italic', marginTop: 3 },
-  contactActions: { flexDirection: 'column', gap: 6, flexShrink: 0 },
-  editBtn: { padding: 6, backgroundColor: '#F5F0FF', borderRadius: 8 },
-  deleteBtn: { padding: 6, backgroundColor: '#FEF2F2', borderRadius: 8 },
+  contactDetail: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  contactDetailText: { fontSize: 13, color: '#6B7280', flex: 1 },
+  contactNotes: { fontSize: 12, color: '#9CA3AF', fontStyle: 'italic', marginTop: 4 },
+  contactActions: { flexDirection: 'column', gap: 8, flexShrink: 0 },
+  editBtn: { padding: 8, backgroundColor: '#F5F0FF', borderRadius: 10 },
+  deleteBtn: { padding: 8, backgroundColor: '#FEF2F2', borderRadius: 10 },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#374151' },

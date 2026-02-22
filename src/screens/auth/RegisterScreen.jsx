@@ -89,6 +89,7 @@ export default function RegisterScreen({ navigation }) {
   const [licenseCategory, setLicenseCategory] = useState('B');
   const [instructorRegNum, setInstructorRegNum] = useState('');
   const [carModel, setCarModel] = useState('');
+  const [carOptions, setCarOptions] = useState('instructor');
   const [pricePerHour, setPricePerHour] = useState('');
   const [bio, setBio] = useState('');
 
@@ -171,6 +172,7 @@ export default function RegisterScreen({ navigation }) {
         licenseCategory,
         instructorRegNum: instructorRegNum.trim(),
         carModel: carModel.trim(),
+        carOptions,
         pricePerHour: parseFloat(pricePerHour) || 80,
         bio: bio.trim(),
       });
@@ -411,6 +413,28 @@ export default function RegisterScreen({ navigation }) {
                     <Text style={styles.infoText}>
                       A nova legislação permite aulas no veículo do próprio aluno. O veículo é opcional.
                     </Text>
+                  </View>
+
+                  {/* Como serão feitas as aulas */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Como serão realizadas as aulas?</Text>
+                    <View style={styles.chipRow}>
+                      {[
+                        { value: 'instructor', label: 'Meu carro' },
+                        { value: 'student',    label: 'Carro do aluno' },
+                        { value: 'both',       label: 'Ambos' },
+                      ].map(opt => (
+                        <TouchableOpacity
+                          key={opt.value}
+                          style={[styles.chip, carOptions === opt.value && styles.chipActive]}
+                          onPress={() => setCarOptions(opt.value)}
+                        >
+                          <Text style={[styles.chipText, carOptions === opt.value && styles.chipTextActive]}>
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
 
                   {/* Preço */}

@@ -12,6 +12,7 @@ export const instructors = [
     reviewsCount: 127,
     bio: 'Instrutora com mais de 10 anos de experiência. Especializada em direção defensiva e preparação para habilitação categoria B.',
     coordinates: { latitude: -23.5505, longitude: -46.6433 },
+    carOptions: 'both',
   },
   {
     id: '2',
@@ -26,6 +27,7 @@ export const instructors = [
     reviewsCount: 89,
     bio: 'Motociclista experiente com 15 anos na estrada. Formações em motocross e direção segura para motos.',
     coordinates: { latitude: -23.5870, longitude: -46.6333 },
+    carOptions: 'instructor',
   },
   {
     id: '3',
@@ -40,6 +42,7 @@ export const instructors = [
     reviewsCount: 154,
     bio: 'Avaliada como a melhor instrutora da região. Foco em alunos com ansiedade ao volante e iniciantes.',
     coordinates: { latitude: -23.5613, longitude: -46.6900 },
+    carOptions: 'both',
   },
   {
     id: '4',
@@ -54,20 +57,22 @@ export const instructors = [
     reviewsCount: 76,
     bio: 'Ex-piloto profissional reconvertido a instrutor. Técnicas avançadas de pilotagem e direção defensiva para motociclistas.',
     coordinates: { latitude: -23.5854, longitude: -46.6822 },
+    carOptions: 'instructor',
   },
   {
     id: '5',
     name: 'Juliana Fernandes',
     photo: 'https://images.unsplash.com/photo-1554652532-4fc3859b0100?w=400&h=400&fit=crop',
-    carModel: 'Volkswagen Polo 2023',
+    carModel: null,
     licenseCategory: 'B',
     pricePerHour: 80,
     rating: 4.9,
     isVerified: true,
     location: 'Moema - 2.7 km',
     reviewsCount: 143,
-    bio: 'Especialista em aulas para mulheres e motoristas com medo. Ambiente de aprendizado acolhedor e sem julgamentos.',
+    bio: 'Especialista em aulas para mulheres e motoristas com medo. Trabalha exclusivamente no carro do aluno — você pratica no veículo com que irá fazer a prova.',
     coordinates: { latitude: -23.6080, longitude: -46.6658 },
+    carOptions: 'student',
   },
   {
     id: '6',
@@ -82,5 +87,6 @@ export const instructors = [
     reviewsCount: 52,
     bio: 'Instrutor jovem e dinâmico. Focado em aulas práticas para quem busca habilitação A rapidamente.',
     coordinates: { latitude: -23.5640, longitude: -46.6580 },
+    carOptions: 'instructor',
   },
 ];

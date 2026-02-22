@@ -61,7 +61,7 @@ export default function EventList() {
           <Text style={styles.eventTitle} numberOfLines={2}>{item.title}</Text>
 
           <View style={styles.eventDetail}>
-            <Ionicons name="time-outline" size={13} color="#9CA3AF" />
+            <Ionicons name="time-outline" size={15} color="#9CA3AF" />
             <Text style={styles.eventDetailText}>
               {new Date(item.startDateTime).toLocaleDateString('pt-BR')} ·{' '}
               {new Date(item.startDateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -72,14 +72,14 @@ export default function EventList() {
 
           {item.location && (
             <View style={styles.eventDetail}>
-              <Ionicons name="location-outline" size={13} color="#9CA3AF" />
+              <Ionicons name="location-outline" size={15} color="#9CA3AF" />
               <Text style={styles.eventDetailText} numberOfLines={1}>{item.location}</Text>
             </View>
           )}
 
           {contact && (
             <View style={styles.eventDetail}>
-              <Ionicons name="person-outline" size={13} color="#9CA3AF" />
+              <Ionicons name="person-outline" size={15} color="#9CA3AF" />
               <Text style={styles.eventDetailText}>{contact.name}</Text>
             </View>
           )}
@@ -138,23 +138,23 @@ const styles = StyleSheet.create({
   filterBtnText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   filterBtnTextActive: { color: '#FFF' },
 
-  list: { padding: 16, gap: 12, paddingBottom: 32 },
+  list: { padding: 16, gap: 14, paddingBottom: 32 },
   eventCard: {
-    flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 14, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
+    flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4,
   },
-  eventColorBar: { width: 5 },
-  eventBody: { flex: 1, padding: 12 },
-  eventTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
-  eventMeta: { flexDirection: 'row', gap: 6 },
-  typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  typeBadgeText: { fontSize: 11, fontWeight: '700' },
-  priorityBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  priorityText: { fontSize: 11, fontWeight: '700' },
-  deleteBtn: { padding: 4 },
-  eventTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  eventDetail: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
-  eventDetailText: { fontSize: 12, color: '#6B7280', flex: 1 },
+  eventColorBar: { width: 6 },
+  eventBody: { flex: 1, padding: 16 },
+  eventTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+  eventMeta: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', flex: 1 },
+  typeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  typeBadgeText: { fontSize: 12, fontWeight: '700' },
+  priorityBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  priorityText: { fontSize: 12, fontWeight: '700' },
+  deleteBtn: { padding: 6 },
+  eventTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 10, lineHeight: 22 },
+  eventDetail: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 5 },
+  eventDetailText: { fontSize: 13, color: '#6B7280', flex: 1 },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#374151' },

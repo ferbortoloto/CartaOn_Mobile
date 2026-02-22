@@ -42,7 +42,7 @@ const INITIAL_REQUESTS = [
     studentAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop',
     location: 'Av. Paulista, 1000 - Bela Vista', distance: '2.3 km', estimatedTime: '8 min',
     type: 'Aula Prática', price: 85, rating: 4.8, phone: '(11) 98765-4321',
-    status: 'pending', requestTime: '2 min atrás',
+    status: 'pending', requestTime: '2 min atrás', carOption: 'instructor',
     coordinates: { latitude: -23.5634, longitude: -46.6521 },
   },
   {
@@ -50,7 +50,7 @@ const INITIAL_REQUESTS = [
     studentAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
     location: 'Rua Augusta, 1500 - Consolação', distance: '3.1 km', estimatedTime: '12 min',
     type: 'Aula Teórica', price: 60, rating: 4.9, phone: '(11) 97654-3210',
-    status: 'pending', requestTime: '5 min atrás',
+    status: 'pending', requestTime: '5 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5505, longitude: -46.6433 },
   },
   {
@@ -58,7 +58,7 @@ const INITIAL_REQUESTS = [
     studentAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop',
     location: 'Alameda Santos, 2000 - Jardim Paulista', distance: '1.8 km', estimatedTime: '6 min',
     type: 'Simulado', price: 70, rating: 5.0, phone: '(11) 96543-2109',
-    status: 'pending', requestTime: '8 min atrás',
+    status: 'pending', requestTime: '8 min atrás', carOption: 'instructor',
     coordinates: { latitude: -23.5669, longitude: -46.6555 },
   },
   {
@@ -66,7 +66,7 @@ const INITIAL_REQUESTS = [
     studentAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop',
     location: 'Rua Oscar Freire, 500 - Pinheiros', distance: '4.2 km', estimatedTime: '15 min',
     type: 'Aula Prática', price: 85, rating: 4.7, phone: '(11) 95432-1098',
-    status: 'accepted', requestTime: '10 min atrás',
+    status: 'accepted', requestTime: '10 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5613, longitude: -46.6689 },
   },
 ];
@@ -384,6 +384,15 @@ export default function DashboardScreen({ navigation }) {
                             <View style={[styles.typeBadge, { backgroundColor: tc.bg }]}>
                               <Text style={[styles.typeBadgeText, { color: tc.text }]}>{req.type}</Text>
                             </View>
+                            <View style={[styles.typeBadge, req.carOption === 'student'
+                              ? { backgroundColor: '#EFF6FF' }
+                              : { backgroundColor: '#F5F0FF' }]}>
+                              <Text style={[styles.typeBadgeText, req.carOption === 'student'
+                                ? { color: '#2563EB' }
+                                : { color: PRIMARY }]}>
+                                {req.carOption === 'student' ? 'Carro do aluno' : 'Carro instrutor'}
+                              </Text>
+                            </View>
                             <View style={styles.ratingPill}>
                               <Ionicons name="star" size={10} color="#EAB308" />
                               <Text style={styles.ratingText}>{req.rating}</Text>
@@ -674,6 +683,11 @@ export default function DashboardScreen({ navigation }) {
 
               <View style={styles.detailBody}>
                 <DetailRow icon="car-outline"      label="Tipo de Aula" value={selectedRequest.type} />
+                <DetailRow
+                  icon={selectedRequest.carOption === 'student' ? 'car-sport-outline' : 'car-outline'}
+                  label="Veículo"
+                  value={selectedRequest.carOption === 'student' ? 'Carro do aluno' : 'Carro do instrutor'}
+                />
                 <DetailRow icon="location-outline" label="Local"        value={selectedRequest.location} />
                 <DetailRow icon="call-outline"     label="Contato"      value={selectedRequest.phone} />
                 <View style={styles.detailGrid}>

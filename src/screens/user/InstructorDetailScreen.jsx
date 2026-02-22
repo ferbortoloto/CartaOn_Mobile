@@ -42,6 +42,9 @@ export default function InstructorDetailScreen({ route, navigation }) {
   const { getActivePlans } = usePlans();
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [carChoice, setCarChoice] = useState(
+    instructor.carOptions === 'student' ? 'student' : 'instructor',
+  );
 
   const plans = getActivePlans(instructor.id);
 
@@ -59,7 +62,10 @@ export default function InstructorDetailScreen({ route, navigation }) {
     const dateStr = selectedDate
       ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
       : '';
-    const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\n\nAguarde a confirmação do instrutor.`;
+    const carLabel = carChoice === 'student'
+      ? 'Seu carro'
+      : `Carro do instrutor${instructor.carModel ? ` (${instructor.carModel})` : ''}`;
+    const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\nVeículo: ${carLabel}\n\nAguarde a confirmação do instrutor.`;
     if (Platform.OS === 'web') {
       window.alert(`Aula Solicitada!\n\n${msg}`);
       navigation.goBack();
@@ -121,9 +127,19 @@ export default function InstructorDetailScreen({ route, navigation }) {
           </View>
           <View style={styles.infoDivider} />
           <View style={styles.infoItem}>
-            <Ionicons name="car-outline" size={20} color="#2563EB" />
-            <Text style={styles.infoValue} numberOfLines={1}>{instructor.carModel}</Text>
-            <Text style={styles.infoLabel}>veículo</Text>
+            {instructor.carOptions === 'student' ? (
+              <>
+                <Ionicons name="car-sport-outline" size={20} color="#2563EB" />
+                <Text style={[styles.infoValue, { color: '#2563EB' }]} numberOfLines={1}>Carro do aluno</Text>
+                <Text style={styles.infoLabel}>veículo</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="car-outline" size={20} color="#2563EB" />
+                <Text style={styles.infoValue} numberOfLines={1}>{instructor.carModel || '—'}</Text>
+                <Text style={styles.infoLabel}>veículo</Text>
+              </>
+            )}
           </View>
           <View style={styles.infoDivider} />
           <View style={styles.infoItem}>
@@ -207,6 +223,45 @@ export default function InstructorDetailScreen({ route, navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Disponibilidade</Text>
           <Text style={styles.sectionSub}>Selecione a data e os horários para solicitar uma aula</Text>
+
+          {/* Car selector */}
+          {instructor.carOptions === 'both' ? (
+            <View style={styles.carSelector}>
+              <Text style={styles.carSelectorLabel}>Qual carro será usado?</Text>
+              <View style={styles.carChipRow}>
+                {[
+                  { v: 'instructor', label: 'Carro do instrutor', icon: 'car-outline' },
+                  { v: 'student',    label: 'Meu carro',          icon: 'car-sport-outline' },
+                ].map(opt => (
+                  <TouchableOpacity
+                    key={opt.v}
+                    style={[styles.carChip, carChoice === opt.v && styles.carChipActive]}
+                    onPress={() => setCarChoice(opt.v)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={opt.icon}
+                      size={14}
+                      color={carChoice === opt.v ? '#FFF' : '#6B7280'}
+                    />
+                    <Text style={[styles.carChipText, carChoice === opt.v && styles.carChipTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.carInfoRow}>
+              <Ionicons name="car-outline" size={13} color={PRIMARY} />
+              <Text style={styles.carInfoText}>
+                {instructor.carOptions === 'student'
+                  ? 'Aula realizada no seu próprio carro'
+                  : `Aula no veículo do instrutor${instructor.carModel ? ` (${instructor.carModel})` : ''}`}
+              </Text>
+            </View>
+          )}
+
           <AvailabilityViewer
             instructorId={instructor.id}
             onSlotsSelected={(slots, date) => {
@@ -344,6 +399,24 @@ const styles = StyleSheet.create({
     shadowColor: '#820AD1', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   planContractBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+
+  // Car selector
+  carSelector: { marginBottom: 14 },
+  carSelectorLabel: { fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 8 },
+  carChipRow: { flexDirection: 'row', gap: 8 },
+  carChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#F9FAFB',
+  },
+  carChipActive: { backgroundColor: PRIMARY, borderColor: PRIMARY },
+  carChipText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
+  carChipTextActive: { color: '#FFF' },
+  carInfoRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#F5F0FF', borderRadius: 10, padding: 10, marginBottom: 14,
+  },
+  carInfoText: { fontSize: 12, color: PRIMARY, fontWeight: '600', flex: 1 },
 
   reviewCard: {
     borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 12, marginTop: 12,
