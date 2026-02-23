@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View, Text, Image, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AvailabilityViewer from '../../components/user/AvailabilityViewer';
+import Avatar from '../../components/shared/Avatar';
 import { usePlans } from '../../context/PlansContext';
 
 const PRIMARY = '#1D4ED8';
@@ -88,7 +89,7 @@ export default function InstructorDetailScreen({ route, navigation }) {
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Hero section */}
         <View style={styles.hero}>
-          <Image source={{ uri: instructor.photo }} style={styles.heroPhoto} />
+          <Avatar uri={instructor.photo} name={instructor.name} size={80} style={styles.heroPhotoFlex} />
           <View style={styles.heroInfo}>
             <View style={styles.heroNameRow}>
               <Text style={styles.heroName}>{instructor.name}</Text>
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', gap: 14,
     borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
-  heroPhoto: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#E5E7EB', flexShrink: 0 },
+  heroPhotoFlex: { flexShrink: 0 },
   heroInfo: { flex: 1, gap: 6 },
   heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   heroName: { fontSize: 20, fontWeight: '800', color: '#111827' },

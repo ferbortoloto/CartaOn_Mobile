@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  FlatList, Image, KeyboardAvoidingView, Platform,
+  FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useChat } from '../../context/ChatContext';
 import { formatMessageTime, formatTimeSeparator } from '../../lib/utils';
+import Avatar from '../../components/shared/Avatar';
 
 const PRIMARY = '#1D4ED8';
 
@@ -68,7 +69,7 @@ function ConversationList({ onSelectConversation }) {
                 activeOpacity={0.75}
               >
                 <View style={styles.convAvatarWrapper}>
-                  <Image source={{ uri: partner.avatar }} style={styles.convAvatar} />
+                  <Avatar uri={partner.avatar} name={partner.name} size={48} />
                   {unread > 0 && (
                     <View style={styles.convBadge}>
                       <Text style={styles.convBadgeText}>{unread > 9 ? '9+' : unread}</Text>
@@ -173,7 +174,7 @@ function ChatConversation({ conversationId, onBack }) {
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#374151" />
         </TouchableOpacity>
-        <Image source={{ uri: partner.avatar }} style={styles.convHeaderAvatar} />
+        <Avatar uri={partner.avatar} name={partner.name} size={40} style={styles.convHeaderAvatar} />
         <View>
           <Text style={styles.convHeaderName}>{partner.name}</Text>
           <Text style={styles.convHeaderRole}>{partner.role}</Text>

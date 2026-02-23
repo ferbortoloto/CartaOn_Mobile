@@ -10,6 +10,7 @@ import { useInstructorSearch } from '../../hooks/useInstructorSearch';
 import { useSession } from '../../context/SessionContext';
 import InstructorCard from '../../components/user/InstructorCard';
 import LeafletMapView from '../../components/shared/LeafletMapView';
+import Avatar from '../../components/shared/Avatar';
 import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
 
 const PRIMARY = '#1D4ED8';
@@ -139,9 +140,7 @@ export default function UserDashboardScreen({ navigation }) {
       <SafeAreaView edges={['top']} style={styles.headerOverlay} pointerEvents="box-none">
         <View style={styles.headerCard}>
           <View style={styles.headerLeft}>
-            <View style={styles.headerAvatar}>
-              <Ionicons name="person" size={18} color="#FFF" />
-            </View>
+            <Avatar uri={user?.avatar} name={user?.name} size={38} />
             <View style={styles.headerInfo}>
               <Text style={styles.headerGreeting}>Bem-vindo!</Text>
               <Text style={styles.headerName}>{user?.name || 'Aluno CartaOn'}</Text>
@@ -271,10 +270,6 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 8,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  headerAvatar: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: PRIMARY,
-    alignItems: 'center', justifyContent: 'center',
-  },
   headerInfo: { flex: 1 },
   headerGreeting: { fontSize: 10, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5 },
   headerName: { fontSize: 14, fontWeight: '800', color: '#111827', marginTop: 1 },

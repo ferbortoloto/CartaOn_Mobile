@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Avatar from '../shared/Avatar';
 
 const PRIMARY = '#F59E0B';
 
@@ -9,7 +10,7 @@ export default function InstructorCard({ instructor, onPress }) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <Image source={{ uri: instructor.photo }} style={styles.photo} />
+      <Avatar uri={instructor.photo} name={instructor.name} size={56} style={styles.photoFlex} />
 
       <View style={styles.info}>
         {/* Name + verified */}
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  photo: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#E5E7EB', flexShrink: 0 },
+  photoFlex: { flexShrink: 0 },
   info: { flex: 1, gap: 3 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   name: { fontSize: 15, fontWeight: '700', color: '#111827', flex: 1 },

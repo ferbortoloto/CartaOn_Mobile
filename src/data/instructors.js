@@ -17,7 +17,7 @@ export const instructors = [
   {
     id: '2',
     name: 'Carlos Oliveira',
-    photo: 'https://images.unsplash.com/photo-1546661424-6b612c5fac93?w=400&h=400&fit=crop',
+    photo: null,
     carModel: 'Honda CB 500X',
     licenseCategory: 'A',
     pricePerHour: 95,

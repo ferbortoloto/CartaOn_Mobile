@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Image, Alert, Platform,
+  TextInput, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import Avatar from '../../components/shared/Avatar';
 
 const PRIMARY = '#1D4ED8';
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
@@ -90,7 +91,7 @@ export default function ProfileScreen() {
         {/* Avatar + Info */}
         <View style={styles.avatarCard}>
           <View style={styles.avatarWrapper}>
-            <Image source={{ uri: user?.avatar }} style={styles.avatar} />
+            <Avatar uri={user?.avatar} name={user?.name} size={100} style={styles.avatarBorder} />
             {isEditing && (
               <TouchableOpacity style={styles.cameraBtn}>
                 <Ionicons name="camera" size={16} color="#FFF" />
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 4,
   },
   avatarWrapper: { position: 'relative', marginBottom: 12 },
-  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: PRIMARY },
+  avatarBorder: { borderWidth: 3, borderColor: PRIMARY },
   cameraBtn: {
     position: 'absolute', bottom: 0, right: 0,
     backgroundColor: PRIMARY, borderRadius: 14, width: 28, height: 28,

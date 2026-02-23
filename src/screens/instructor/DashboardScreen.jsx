@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
-  ScrollView, Image, Platform, Alert, Animated, Dimensions, PanResponder,
+  ScrollView, Platform, Alert, Animated, Dimensions, PanResponder,
   TextInput, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { usePlans } from '../../context/PlansContext';
 import { useSession } from '../../context/SessionContext';
 import LeafletMapView from '../../components/shared/LeafletMapView';
 import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
+import Avatar from '../../components/shared/Avatar';
 
 const PRIMARY = '#1D4ED8';
 const SCREEN_H = Dimensions.get('window').height;
@@ -313,9 +314,7 @@ export default function DashboardScreen({ navigation }) {
       <SafeAreaView edges={['top']} style={styles.headerOverlay}>
         <View style={styles.headerCard}>
           <View style={styles.headerLeft}>
-            <View style={styles.headerAvatar}>
-              <Ionicons name="person" size={20} color="#FFF" />
-            </View>
+            <Avatar uri={user?.avatar} name={user?.name} size={40} />
             <View>
               <Text style={styles.headerGreeting}>Bem-vindo</Text>
               <Text style={styles.headerName}>{user?.name || 'Instrutor CartaOn'}</Text>
@@ -445,7 +444,7 @@ export default function DashboardScreen({ navigation }) {
                     <View style={styles.reqAccent} />
                     <View style={styles.reqBody}>
                       <View style={styles.reqTopRow}>
-                        <Image source={{ uri: req.studentAvatar }} style={styles.reqAvatar} />
+                        <Avatar uri={req.studentAvatar} name={req.studentName} size={40} />
                         <View style={styles.reqNameBlock}>
                           <Text style={styles.reqName}>{req.studentName}</Text>
                           <View style={styles.reqBadgesRow}>
@@ -769,7 +768,7 @@ export default function DashboardScreen({ navigation }) {
             </View>
             <ScrollView style={{ flex: 1 }}>
               <View style={styles.detailStudentRow}>
-                <Image source={{ uri: selectedRequest.studentAvatar }} style={styles.detailAvatar} />
+                <Avatar uri={selectedRequest.studentAvatar} name={selectedRequest.studentName} size={60} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.detailStudentName}>{selectedRequest.studentName}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
@@ -845,7 +844,6 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 6,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: PRIMARY, alignItems: 'center', justifyContent: 'center' },
   headerGreeting: { fontSize: 10, fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase' },
   headerName: { fontSize: 14, fontWeight: '800', color: '#111827' },
   bellBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F9FAFB', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
