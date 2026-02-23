@@ -8,7 +8,7 @@ import EventList from '../../components/schedule/EventList';
 import ContactList from '../../components/schedule/ContactList';
 import { useSchedule } from '../../context/ScheduleContext';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const TABS = [
   { key: 'calendar',     label: 'Calendário', icon: 'calendar-outline', iconActive: 'calendar'  },
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   headerStats: { flexDirection: 'column', alignItems: 'flex-end', gap: 4 },
   statPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#F5F0FF', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: '#EFF6FF', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
   },
   statPillText: { fontSize: 11, fontWeight: '700', color: PRIMARY },
 

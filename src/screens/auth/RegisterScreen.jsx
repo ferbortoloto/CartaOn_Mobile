@@ -40,7 +40,7 @@ function SectionHeader({ icon, title }) {
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionIconBox}>
-        <Ionicons name={icon} size={16} color="#820AD1" />
+        <Ionicons name={icon} size={16} color="#1D4ED8" />
       </View>
       <Text style={styles.sectionTitle}>{title}</Text>
     </View>
@@ -184,7 +184,7 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={['#820AD1', '#A855F7']} style={styles.gradient}>
+    <LinearGradient colors={['#0F172A', '#1E3A8A', '#1D4ED8']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -202,7 +202,7 @@ export default function RegisterScreen({ navigation }) {
               </TouchableOpacity>
               <View style={styles.brand}>
                 <View style={styles.logoCircle}>
-                  <Ionicons name="car-sport" size={32} color="#820AD1" />
+                  <Ionicons name="car-sport" size={32} color="#1D4ED8" />
                 </View>
                 <Text style={styles.brandName}>CartaOn</Text>
                 <Text style={styles.brandSub}>Criar nova conta</Text>
@@ -409,7 +409,7 @@ export default function RegisterScreen({ navigation }) {
                     />
                   </Field>
                   <View style={styles.infoBox}>
-                    <Ionicons name="information-circle-outline" size={14} color="#820AD1" />
+                    <Ionicons name="information-circle-outline" size={14} color="#1D4ED8" />
                     <Text style={styles.infoText}>
                       A nova legislação permite aulas no veículo do próprio aluno. O veículo é opcional.
                     </Text>
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     gap: 8, paddingVertical: 12, borderRadius: 12,
     borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
   },
-  roleBtnActive: { backgroundColor: '#820AD1', borderColor: '#820AD1' },
+  roleBtnActive: { backgroundColor: '#1D4ED8', borderColor: '#1D4ED8' },
   roleBtnText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
   roleBtnTextActive: { color: '#FFF' },
 
@@ -551,19 +551,19 @@ const styles = StyleSheet.create({
   avatarBtn: { position: 'relative' },
   avatarImg: {
     width: 90, height: 90, borderRadius: 45,
-    borderWidth: 3, borderColor: '#820AD1',
+    borderWidth: 3, borderColor: '#1D4ED8',
   },
   avatarPlaceholder: {
     width: 90, height: 90, borderRadius: 45,
-    backgroundColor: '#F5F0FF', borderWidth: 2, borderColor: '#D8B4FE',
+    backgroundColor: '#EFF6FF', borderWidth: 2, borderColor: '#BFDBFE',
     alignItems: 'center', justifyContent: 'center',
     borderStyle: 'dashed',
   },
-  avatarInitials: { fontSize: 30, fontWeight: '800', color: '#820AD1' },
+  avatarInitials: { fontSize: 30, fontWeight: '800', color: '#1D4ED8' },
   avatarBadge: {
     position: 'absolute', bottom: 2, right: 2,
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#820AD1', borderWidth: 2, borderColor: '#FFF',
+    backgroundColor: '#1D4ED8', borderWidth: 2, borderColor: '#FFF',
     alignItems: 'center', justifyContent: 'center',
   },
   avatarHint: { fontSize: 12, color: '#9CA3AF', marginTop: 8 },
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   },
   sectionIconBox: {
     width: 28, height: 28, borderRadius: 8,
-    backgroundColor: '#F5F0FF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 13, fontWeight: '700', color: '#374151',
@@ -607,10 +607,10 @@ const styles = StyleSheet.create({
   // Info box
   infoBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    backgroundColor: '#F5F0FF', borderRadius: 8, padding: 10,
+    backgroundColor: '#EFF6FF', borderRadius: 8, padding: 10,
     marginBottom: 14, marginTop: -6,
   },
-  infoText: { fontSize: 12, color: '#820AD1', flex: 1, lineHeight: 18 },
+  infoText: { fontSize: 12, color: '#1D4ED8', flex: 1, lineHeight: 18 },
 
   // Textarea
   textareaWrapper: { alignItems: 'flex-start', paddingVertical: 14 },
@@ -624,15 +624,15 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
   },
   chipWide: { paddingHorizontal: 12 },
-  chipActive: { backgroundColor: '#820AD1', borderColor: '#820AD1' },
+  chipActive: { backgroundColor: '#1D4ED8', borderColor: '#1D4ED8' },
   chipText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
   chipTextActive: { color: '#FFF' },
 
   // Button
   btn: {
-    backgroundColor: '#820AD1', borderRadius: 14, height: 52, marginTop: 8,
+    backgroundColor: '#1D4ED8', borderRadius: 14, height: 52, marginTop: 8,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#820AD1', shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
   btnDisabled: { opacity: 0.6 },
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   // Login link
   loginLink: { alignItems: 'center', marginTop: 18, paddingVertical: 4 },
   loginLinkText: { fontSize: 14, color: '#6B7280' },
-  loginLinkBold: { fontWeight: '700', color: '#820AD1' },
+  loginLinkBold: { fontWeight: '700', color: '#1D4ED8' },
 
   footer: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: 24, fontSize: 12 },
 });

@@ -90,7 +90,7 @@ function buildHTML(center, zoom, markers) {
       if (!pill) return;
       if (mId === id) {
         pill.style.transform = 'scale(1.25)';
-        pill.style.borderColor = '#820AD1';
+        pill.style.borderColor = '#1D4ED8';
         pill.style.boxShadow = '0 4px 16px rgba(130,10,209,0.45)';
         pill.style.zIndex = '9999';
       } else {

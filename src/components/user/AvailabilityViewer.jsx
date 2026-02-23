@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const ALL_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',

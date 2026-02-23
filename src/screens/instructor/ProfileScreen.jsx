@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const achievements = [
   { icon: 'trophy-outline', title: 'Mais de 500 alunos formados', year: '2023' },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   achievementRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 12 },
   achievementIcon: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#F5F0FF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
   achievementTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
   achievementYear: { fontSize: 12, color: '#9CA3AF', marginTop: 1 },

@@ -295,7 +295,7 @@ export const formatDateTime = (dateTimeString) => {
 export const getEventColor = (type) => {
   const colors = {
     class: '#3B82F6',
-    meeting: '#A855F7',
+    meeting: '#7C3AED',
     appointment: '#22C55E',
     personal: '#EAB308',
     other: '#6B7280',

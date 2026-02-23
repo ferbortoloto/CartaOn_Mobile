@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AvailabilityViewer from '../../components/user/AvailabilityViewer';
 import { usePlans } from '../../context/PlansContext';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const CLASS_TYPE_ICON = {
   'Aula Prática': 'car-outline',
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   planCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   planIconBox: {
-    width: 40, height: 40, borderRadius: 12, backgroundColor: `#820AD115`,
+    width: 40, height: 40, borderRadius: 12, backgroundColor: `#1D4ED815`,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   planName: { fontSize: 14, fontWeight: '800', color: '#111827' },
@@ -386,17 +386,17 @@ const styles = StyleSheet.create({
   planChipsRow: { flexDirection: 'row', gap: 6 },
   planChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#F5F0FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
-  planChipText: { fontSize: 11, fontWeight: '700', color: '#820AD1' },
+  planChipText: { fontSize: 11, fontWeight: '700', color: '#1D4ED8' },
   planFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
   planPrice: { fontSize: 18, fontWeight: '800', color: '#111827' },
   planPriceSub: { fontSize: 11, color: '#9CA3AF', marginTop: 1 },
   planContractBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#820AD1', borderRadius: 12,
+    backgroundColor: '#1D4ED8', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 10,
-    shadowColor: '#820AD1', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   planContractBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
 
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   carChipTextActive: { color: '#FFF' },
   carInfoRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#F5F0FF', borderRadius: 10, padding: 10, marginBottom: 14,
+    backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10, marginBottom: 14,
   },
   carInfoText: { fontSize: 12, color: PRIMARY, fontWeight: '600', flex: 1 },
 

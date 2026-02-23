@@ -11,8 +11,8 @@ import ChatScreen from '../screens/instructor/ChatScreen';
 
 const Tab = createBottomTabNavigator();
 
-const PRIMARY = '#820AD1';
-const PILL_BG = '#F3E8FF';
+const PRIMARY = '#1D4ED8';
+const PILL_BG = '#EFF6FF';
 
 const TABS = [
   { name: 'Dashboard', label: 'Painel',    icon: 'home-outline',        iconActive: 'home'        },

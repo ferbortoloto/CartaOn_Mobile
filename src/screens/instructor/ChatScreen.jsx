@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useChat } from '../../context/ChatContext';
 import { formatMessageTime, formatTimeSeparator } from '../../lib/utils';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 // ─── Conversation List ────────────────────────────────────────────────────────
 function ConversationList({ onSelectConversation }) {

@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSchedule } from '../../context/ScheduleContext';
 import ContactModal from './ContactModal';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const STATUS_CONFIG = {
   active: { label: 'Ativo', color: '#16A34A', bg: '#F0FDF4' },

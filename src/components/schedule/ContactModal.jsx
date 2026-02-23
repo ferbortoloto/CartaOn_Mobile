@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Ativo', color: '#16A34A' },

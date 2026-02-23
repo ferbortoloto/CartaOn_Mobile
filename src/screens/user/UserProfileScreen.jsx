@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const ACHIEVEMENTS = [
   { icon: 'car-outline', label: '5 Aulas', color: '#2563EB', bg: '#EFF6FF' },

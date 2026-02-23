@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlans } from '../../context/PlansContext';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const PAYMENT_METHODS = [
   { key: 'pix',    label: 'Pix',              icon: 'flash-outline',       subtitle: 'Aprovação instantânea' },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   summaryTop: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   planIconBox: {
-    width: 52, height: 52, borderRadius: 14, backgroundColor: `#820AD115`,
+    width: 52, height: 52, borderRadius: 14, backgroundColor: `#1D4ED815`,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   summaryInfo: { flex: 1, gap: 3 },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   summaryChips: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   summaryChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#F5F0FF', borderRadius: 10,
+    backgroundColor: '#EFF6FF', borderRadius: 10,
     paddingHorizontal: 10, paddingVertical: 5,
   },
   summaryChipText: { fontSize: 12, fontWeight: '700', color: PRIMARY },
@@ -264,12 +264,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF', borderRadius: 14, padding: 14,
     borderWidth: 1.5, borderColor: '#E5E7EB',
   },
-  paymentOptionSelected: { borderColor: PRIMARY, backgroundColor: '#FDFAFF' },
+  paymentOptionSelected: { borderColor: PRIMARY, backgroundColor: '#EFF6FF' },
   paymentIconBox: {
     width: 40, height: 40, borderRadius: 12, backgroundColor: '#F3F4F6',
     alignItems: 'center', justifyContent: 'center',
   },
-  paymentIconBoxSelected: { backgroundColor: `#820AD115` },
+  paymentIconBoxSelected: { backgroundColor: `#1D4ED815` },
   paymentLabel: { fontSize: 14, fontWeight: '700', color: '#374151' },
   paymentLabelSelected: { color: PRIMARY },
   paymentSub: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },

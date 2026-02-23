@@ -32,7 +32,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={['#820AD1', '#A855F7']} style={styles.gradient}>
+    <LinearGradient colors={['#0F172A', '#1E3A8A', '#1D4ED8']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -42,10 +42,10 @@ export default function LoginScreen({ navigation }) {
             {/* Logo / Brand */}
             <View style={styles.brand}>
               <View style={styles.logoCircle}>
-                <Ionicons name="car-sport" size={40} color="#820AD1" />
+                <Ionicons name="car-sport" size={38} color="#1D4ED8" />
               </View>
               <Text style={styles.brandName}>CartaOn</Text>
-              <Text style={styles.brandSub}>Painel do Instrutor</Text>
+              <Text style={styles.brandSub}>Sua auto-escola no bolso</Text>
             </View>
 
             {/* Card */}
@@ -57,11 +57,11 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>E-mail</Text>
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                  <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="instrutor@gmail.com"
-                    placeholderTextColor="#9CA3AF"
+                    placeholder="seu@email.com"
+                    placeholderTextColor="#CBD5E1"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -75,11 +75,11 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Senha</Text>
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
                     placeholder="••••••"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="#CBD5E1"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -88,7 +88,7 @@ export default function LoginScreen({ navigation }) {
                     <Ionicons
                       name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                       size={18}
-                      color="#9CA3AF"
+                      color="#94A3B8"
                     />
                   </TouchableOpacity>
                 </View>
@@ -96,9 +96,9 @@ export default function LoginScreen({ navigation }) {
 
               {/* Hint */}
               <View style={styles.hintBox}>
-                <Ionicons name="information-circle-outline" size={14} color="#820AD1" />
+                <Ionicons name="information-circle-outline" size={14} color="#1D4ED8" />
                 <Text style={styles.hintText}>
-                  Demo: instrutor@gmail.com / admin
+                  Demo: instrutor@gmail.com ou user@gmail.com · senha: admin
                 </Text>
               </View>
 
@@ -121,11 +121,11 @@ export default function LoginScreen({ navigation }) {
             </View>
 
             <TouchableOpacity style={styles.registerLink} onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.registerLinkText}>
-                  Ainda não tem conta?{' '}
-                  <Text style={styles.registerLinkBold}>Criar conta</Text>
-                </Text>
-              </TouchableOpacity>
+              <Text style={styles.registerLinkText}>
+                Ainda não tem conta?{' '}
+                <Text style={styles.registerLinkBold}>Criar conta</Text>
+              </Text>
+            </TouchableOpacity>
 
             <Text style={styles.footer}>CartaOn © {new Date().getFullYear()}</Text>
           </ScrollView>
@@ -140,47 +140,54 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   kav: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
-  brand: { alignItems: 'center', marginBottom: 32 },
+
+  brand: { alignItems: 'center', marginBottom: 36 },
   logoCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 8, elevation: 8, marginBottom: 12,
+    width: 84, height: 84, borderRadius: 42,
+    backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25, shadowRadius: 12, elevation: 10, marginBottom: 16,
   },
-  brandName: { fontSize: 32, fontWeight: '800', color: '#FFF', letterSpacing: 1 },
-  brandSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  brandName: { fontSize: 34, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
+  brandSub: { fontSize: 14, color: 'rgba(255,255,255,0.65)', marginTop: 6, letterSpacing: 0.2 },
+
   card: {
-    backgroundColor: '#FFF', borderRadius: 24, padding: 24,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15, shadowRadius: 16, elevation: 10,
+    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2, shadowRadius: 20, elevation: 12,
   },
-  cardTitle: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  cardSub: { fontSize: 14, color: '#6B7280', marginBottom: 24 },
+  cardTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  cardSub: { fontSize: 14, color: '#64748B', marginBottom: 24 },
+
   inputGroup: { marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
-    backgroundColor: '#F9FAFB', paddingHorizontal: 12,
+    borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 12,
+    backgroundColor: '#F8FAFC', paddingHorizontal: 12,
   },
   inputIcon: { marginRight: 8 },
-  input: { flex: 1, height: 48, fontSize: 15, color: '#111827' },
+  input: { flex: 1, height: 48, fontSize: 15, color: '#0F172A' },
   eyeBtn: { padding: 4 },
+
   hintBox: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#F5F0FF', borderRadius: 8, padding: 10, marginBottom: 20,
+    backgroundColor: '#EFF6FF', borderRadius: 8, padding: 10, marginBottom: 20,
   },
-  hintText: { fontSize: 12, color: '#820AD1', flex: 1 },
+  hintText: { fontSize: 11, color: '#1D4ED8', flex: 1 },
+
   btn: {
-    backgroundColor: '#820AD1', borderRadius: 14, height: 52,
+    backgroundColor: '#1D4ED8', borderRadius: 14, height: 52,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#820AD1', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 8, elevation: 6,
   },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  registerLink: { alignItems: 'center', marginTop: 20 },
-  registerLinkText: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
-  registerLinkBold: { fontWeight: '700', color: '#FFF' },
-  footer: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: 16, fontSize: 12 },
+  btnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+
+  registerLink: { alignItems: 'center', marginTop: 24 },
+  registerLinkText: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
+  registerLinkBold: { fontWeight: '700', color: '#FFFFFF' },
+
+  footer: { textAlign: 'center', color: 'rgba(255,255,255,0.4)', marginTop: 20, fontSize: 12 },
 });

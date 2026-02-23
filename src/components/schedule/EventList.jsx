@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSchedule } from '../../context/ScheduleContext';
 import { getEventColor } from '../../data/scheduleData';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const TYPE_LABELS = { class: 'Aula', meeting: 'Reunião', appointment: 'Compromisso', personal: 'Pessoal', other: 'Outro' };
 const PRIORITY_LABELS = { low: 'Baixa', medium: 'Média', high: 'Alta', urgent: 'Urgente' };

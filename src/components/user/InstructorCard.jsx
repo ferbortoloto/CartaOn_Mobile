@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#F59E0B';
 
 export default function InstructorCard({ instructor, onPress }) {
   const catColor = instructor.licenseCategory === 'A' ? '#EA580C' : '#2563EB';

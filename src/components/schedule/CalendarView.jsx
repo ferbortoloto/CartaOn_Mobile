@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSchedule } from '../../context/ScheduleContext';
 import { getEventColor } from '../../data/scheduleData';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',

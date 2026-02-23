@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,9 +10,16 @@ import PlanCheckoutScreen from '../screens/user/PlanCheckoutScreen';
 import ChatScreen from '../screens/instructor/ChatScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
+const PILL_BG = '#EFF6FF';
 const Tab = createBottomTabNavigator();
 const MapStack = createNativeStackNavigator();
+
+const TABS = [
+  { name: 'MapaTab',       label: 'Mapa',      icon: 'map-outline',         iconActive: 'map'         },
+  { name: 'MensagensTab',  label: 'Mensagens', icon: 'chatbubbles-outline', iconActive: 'chatbubbles' },
+  { name: 'PerfilTab',     label: 'Perfil',    icon: 'person-outline',      iconActive: 'person'      },
+];
 
 function MapStackNavigator() {
   return (
@@ -24,73 +31,88 @@ function MapStackNavigator() {
   );
 }
 
-export default function UserTabNavigator() {
+function CustomTabBar({ state, navigation }) {
   const { conversations, getUnreadCount } = useChat();
-
   const totalUnread = conversations.reduce((acc, conv) => acc + getUnreadCount(conv.id), 0);
 
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: PRIMARY,
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarStyle: {
-          backgroundColor: '#FFF',
-          borderTopWidth: 1,
-          borderTopColor: '#F3F4F6',
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+    <View style={{
+      flexDirection: 'row',
+      backgroundColor: '#FFFFFF',
+      borderTopWidth: 1,
+      borderTopColor: '#F1F5F9',
+      paddingHorizontal: 4,
+      paddingTop: 8,
+      paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+      alignItems: 'center',
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+    }}>
+      {state.routes.map((route, index) => {
+        const tab = TABS[index];
+        const focused = state.index === index;
+        const isChatTab = tab.name === 'MensagensTab';
+        const hasBadge = isChatTab && totalUnread > 0;
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            onPress={() => navigation.navigate(route.name)}
+            activeOpacity={0.75}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          >
+            {focused ? (
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: PILL_BG,
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 24,
+                gap: 5,
+              }}>
+                <Ionicons name={tab.iconActive} size={19} color={PRIMARY} />
+                <Text style={{ color: PRIMARY, fontSize: 12, fontWeight: '700', letterSpacing: 0.1 }}>
+                  {tab.label}
+                </Text>
+              </View>
+            ) : (
+              <View style={{ padding: 8, position: 'relative' }}>
+                <Ionicons name={tab.icon} size={22} color="#94A3B8" />
+                {hasBadge && (
+                  <View style={{
+                    position: 'absolute', top: 4, right: 4,
+                    backgroundColor: '#DC2626', borderRadius: 7,
+                    minWidth: 14, height: 14,
+                    justifyContent: 'center', alignItems: 'center',
+                    paddingHorizontal: 2, borderWidth: 1.5, borderColor: '#FFF',
+                  }}>
+                    <Text style={{ color: '#FFF', fontSize: 9, fontWeight: '800' }}>
+                      {totalUnread > 9 ? '9+' : totalUnread}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
+        );
       })}
+    </View>
+  );
+}
+
+export default function UserTabNavigator() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen
-        name="MapaTab"
-        component={MapStackNavigator}
-        options={{
-          tabBarLabel: 'Mapa',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="MensagensTab"
-        component={ChatScreen}
-        options={{
-          tabBarLabel: 'Mensagens',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ position: 'relative' }}>
-              <Ionicons name="chatbubbles-outline" size={size} color={color} />
-              {totalUnread > 0 && (
-                <View style={{
-                  position: 'absolute', top: -4, right: -8,
-                  backgroundColor: '#EF4444', borderRadius: 8,
-                  minWidth: 16, height: 16,
-                  alignItems: 'center', justifyContent: 'center',
-                  paddingHorizontal: 3, borderWidth: 1.5, borderColor: '#FFF',
-                }}>
-                  <Text style={{ color: '#FFF', fontSize: 9, fontWeight: '800' }}>
-                    {totalUnread > 9 ? '9+' : totalUnread}
-                  </Text>
-                </View>
-              )}
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="PerfilTab"
-        component={UserProfileScreen}
-        options={{
-          tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
+      <Tab.Screen name="MapaTab"      component={MapStackNavigator} />
+      <Tab.Screen name="MensagensTab" component={ChatScreen} />
+      <Tab.Screen name="PerfilTab"    component={UserProfileScreen} />
     </Tab.Navigator>
   );
 }

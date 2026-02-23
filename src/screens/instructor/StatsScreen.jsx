@@ -7,13 +7,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 
 const stats = [
   { title: 'Aulas esta Semana', value: '24', change: '+12%', icon: 'calendar-outline', color: '#2563EB', bg: '#EFF6FF' },
   { title: 'Alunos Ativos', value: '18', change: '+3', icon: 'people-outline', color: '#16A34A', bg: '#F0FDF4' },
   { title: 'Avaliação Média', value: '4.9', change: '+0.1', icon: 'star-outline', color: '#CA8A04', bg: '#FEFCE8' },
-  { title: 'Faturamento', value: 'R$ 2.040', change: '+18%', icon: 'cash-outline', color: PRIMARY, bg: '#F5F0FF' },
+  { title: 'Faturamento', value: 'R$ 2.040', change: '+18%', icon: 'cash-outline', color: PRIMARY, bg: '#EFF6FF' },
 ];
 
 const recentClasses = [
@@ -121,7 +121,7 @@ export default function StatsScreen() {
         </View>
 
         {/* Banner do mês */}
-        <LinearGradient colors={[PRIMARY, '#A855F7']} style={styles.banner}>
+        <LinearGradient colors={['#1E3A8A', '#1D4ED8']} style={styles.banner}>
           <View style={styles.bannerLeft}>
             <Text style={styles.bannerTitle}>Avaliação do Mês</Text>
             <Text style={styles.bannerSub}>Você recebeu 5 novas avaliações! Média 4.9 ⭐</Text>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 13, color: '#6B7280', marginTop: 2 },
   avatarCircle: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#F5F0FF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
   content: { padding: 16, paddingBottom: 32 },
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },

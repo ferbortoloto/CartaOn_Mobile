@@ -11,7 +11,7 @@ import { useSchedule } from '../../context/ScheduleContext';
 import { usePlans } from '../../context/PlansContext';
 import LeafletMapView from '../../components/shared/LeafletMapView';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 const SCREEN_H = Dimensions.get('window').height;
 const EXPANDED_H = SCREEN_H * 0.48;
 const COLLAPSED_H = 88; // handle + kpi strip
@@ -100,7 +100,7 @@ const INITIAL_NOTIFICATIONS = [
 ];
 
 const NOTIF_STYLE = {
-  request: { bg: '#F5F0FF', icon: 'notifications-outline', color: '#820AD1', label: 'Solicitação' },
+  request: { bg: '#EFF6FF', icon: 'notifications-outline', color: '#1D4ED8', label: 'Solicitação' },
   message: { bg: '#EFF6FF', icon: 'chatbubble-outline', color: '#2563EB', label: 'Mensagem' },
   late:    { bg: '#FFFBEB', icon: 'warning-outline',     color: '#CA8A04', label: 'Atraso' },
 };
@@ -298,7 +298,7 @@ export default function DashboardScreen({ navigation }) {
 
         {/* ── KPI strip ── */}
         <View style={styles.kpiStrip}>
-          <View style={[styles.kpiChip, { backgroundColor: '#F5F0FF' }]}>
+          <View style={[styles.kpiChip, { backgroundColor: '#EFF6FF' }]}>
             <Ionicons name="notifications-outline" size={14} color={PRIMARY} />
             <Text style={[styles.kpiNum, { color: PRIMARY }]}>{pendingRequests.length}</Text>
             <Text style={[styles.kpiLbl, { color: PRIMARY }]}>Pendentes</Text>
@@ -342,7 +342,7 @@ export default function DashboardScreen({ navigation }) {
               <Text style={[styles.tabBtnText, activeTab === 'plans' && styles.tabBtnTextActive]}>
                 Planos
               </Text>
-              <View style={[styles.tabBadge, { backgroundColor: '#F5F0FF' }]}>
+              <View style={[styles.tabBadge, { backgroundColor: '#EFF6FF' }]}>
                 <Text style={[styles.tabBadgeText, { color: PRIMARY }]}>{instructorPlans.length}</Text>
               </View>
             </TouchableOpacity>
@@ -386,7 +386,7 @@ export default function DashboardScreen({ navigation }) {
                             </View>
                             <View style={[styles.typeBadge, req.carOption === 'student'
                               ? { backgroundColor: '#EFF6FF' }
-                              : { backgroundColor: '#F5F0FF' }]}>
+                              : { backgroundColor: '#EFF6FF' }]}>
                               <Text style={[styles.typeBadgeText, req.carOption === 'student'
                                 ? { color: '#2563EB' }
                                 : { color: PRIMARY }]}>
@@ -496,7 +496,7 @@ export default function DashboardScreen({ navigation }) {
                     <Switch
                       value={plan.isActive}
                       onValueChange={() => togglePlan(plan.id)}
-                      trackColor={{ false: '#E5E7EB', true: `#820AD160` }}
+                      trackColor={{ false: '#E5E7EB', true: '#BFDBFE' }}
                       thumbColor={plan.isActive ? PRIMARY : '#9CA3AF'}
                     />
                   </View>
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
   planCardInactive: { backgroundColor: '#FAFAFA', opacity: 0.7 },
   planCardLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   planIconBox: {
-    width: 38, height: 38, borderRadius: 10, backgroundColor: `#820AD115`,
+    width: 38, height: 38, borderRadius: 10, backgroundColor: `#1D4ED815`,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   planCardName: { fontSize: 13, fontWeight: '700', color: '#111827' },
@@ -889,13 +889,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
   },
-  typeSelectorBtnActive: { borderColor: PRIMARY, backgroundColor: '#F5F0FF' },
+  typeSelectorBtnActive: { borderColor: PRIMARY, backgroundColor: '#EFF6FF' },
   typeSelectorText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   typeSelectorTextActive: { color: PRIMARY, fontWeight: '700' },
 
   // ── Empty state ──
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 24 },
-  emptyIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#F5F0FF', alignItems: 'center', justifyContent: 'center' },
+  emptyIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
   emptyText: { fontSize: 12, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 24 },
 
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
   unreadBadge: { backgroundColor: '#FEE2E2', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
   unreadBadgeText: { fontSize: 11, fontWeight: '700', color: '#EF4444' },
-  markAllBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#F5F0FF', borderRadius: 8 },
+  markAllBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#EFF6FF', borderRadius: 8 },
   markAllText: { fontSize: 12, color: PRIMARY, fontWeight: '600' },
   closeBtn: { padding: 4 },
 
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
   detailStudentName: { fontSize: 18, fontWeight: '800', color: '#111827' },
   detailRating: { fontSize: 13, fontWeight: '600', color: '#374151' },
   detailAgo: { fontSize: 12, color: '#9CA3AF' },
-  detailPriceTag: { alignItems: 'center', backgroundColor: '#F5F0FF', borderRadius: 12, padding: 10 },
+  detailPriceTag: { alignItems: 'center', backgroundColor: '#EFF6FF', borderRadius: 12, padding: 10 },
   detailPriceLabel: { fontSize: 10, color: PRIMARY, fontWeight: '600', textTransform: 'uppercase' },
   detailPriceVal: { fontSize: 20, fontWeight: '800', color: PRIMARY },
 

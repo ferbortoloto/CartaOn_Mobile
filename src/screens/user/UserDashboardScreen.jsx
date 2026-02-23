@@ -10,7 +10,7 @@ import { useInstructorSearch } from '../../hooks/useInstructorSearch';
 import InstructorCard from '../../components/user/InstructorCard';
 import LeafletMapView from '../../components/shared/LeafletMapView';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 const MAP_CENTER = { lat: -23.5700, lng: -46.6600 };
 
 const CATEGORY_FILTERS = [
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   headerName: { fontSize: 14, fontWeight: '800', color: '#111827', marginTop: 1 },
   countPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#F5F0FF', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: '#EFF6FF', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6,
   },
   countPillText: { fontSize: 11, fontWeight: '700', color: PRIMARY },
 

@@ -6,7 +6,7 @@ import {
   WeekDays, WeekDaysNames, WeekDaysShort,
 } from '../../data/availabilityData';
 
-const PRIMARY = '#820AD1';
+const PRIMARY = '#1D4ED8';
 const DAYS_ORDER = [
   WeekDays.MONDAY, WeekDays.TUESDAY, WeekDays.WEDNESDAY,
   WeekDays.THURSDAY, WeekDays.FRIDAY, WeekDays.SATURDAY, WeekDays.SUNDAY,
