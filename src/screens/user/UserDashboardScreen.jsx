@@ -7,8 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useInstructorSearch } from '../../hooks/useInstructorSearch';
+import { useSession } from '../../context/SessionContext';
 import InstructorCard from '../../components/user/InstructorCard';
 import LeafletMapView from '../../components/shared/LeafletMapView';
+import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
 
 const PRIMARY = '#1D4ED8';
 const MAP_CENTER = { lat: -23.5700, lng: -46.6600 };
@@ -27,6 +29,7 @@ const MIDPOINT = (EXPANDED_H + COLLAPSED_H) / 2;
 export default function UserDashboardScreen({ navigation }) {
   const { user } = useAuth();
   const { instructors, loading } = useInstructorSearch();
+  const { activeSession, elapsedSeconds, isCompleted, latestPendingCode } = useSession();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [panelExpanded, setPanelExpanded] = useState(true);
@@ -165,6 +168,29 @@ export default function UserDashboardScreen({ navigation }) {
           />
         </View>
 
+        {/* ── Active Session or Pending Code ── */}
+        {activeSession ? (
+          <ActiveSessionCard
+            activeSession={activeSession}
+            elapsedSeconds={elapsedSeconds}
+            isCompleted={isCompleted}
+            isInstructor={false}
+          />
+        ) : latestPendingCode ? (
+          <View style={styles.codeCard}>
+            <View style={styles.codeCardLeft}>
+              <View style={styles.codeCardIconBox}>
+                <Ionicons name="key-outline" size={18} color="#1D4ED8" />
+              </View>
+              <View>
+                <Text style={styles.codeCardLabel}>Código da sua aula</Text>
+                <Text style={styles.codeCardSub}>Mostre ao instrutor para iniciar</Text>
+              </View>
+            </View>
+            <Text style={styles.codeCardCode}>{latestPendingCode[0]}</Text>
+          </View>
+        ) : null}
+
         {/* Search */}
         <View style={styles.searchRow}>
           <View style={styles.searchBox}>
@@ -288,4 +314,22 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 13, color: '#9CA3AF' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
   emptyText: { fontSize: 14, color: '#9CA3AF' },
+
+  // ── Pending session code card ──
+  codeCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#EFF6FF', borderRadius: 14, borderWidth: 1.5, borderColor: '#BFDBFE',
+    marginHorizontal: 12, marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12,
+  },
+  codeCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  codeCardIconBox: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: '#DBEAFE',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  codeCardLabel: { fontSize: 13, fontWeight: '700', color: '#1D4ED8' },
+  codeCardSub: { fontSize: 11, color: '#3B82F6', marginTop: 1 },
+  codeCardCode: {
+    fontSize: 26, fontWeight: '900', color: '#1D4ED8', letterSpacing: 4,
+    fontVariant: ['tabular-nums'],
+  },
 });

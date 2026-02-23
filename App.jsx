@@ -9,6 +9,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ScheduleProvider } from './src/context/ScheduleContext';
 import { ChatProvider } from './src/context/ChatContext';
 import { PlansProvider } from './src/context/PlansContext';
+import { SessionProvider } from './src/context/SessionContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
       <AuthProvider>
+        <SessionProvider>
         <ScheduleProvider>
           <ChatProvider>
             <PlansProvider>
@@ -26,6 +28,7 @@ export default function App() {
             </PlansProvider>
           </ChatProvider>
         </ScheduleProvider>
+        </SessionProvider>
       </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

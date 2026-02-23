@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 
 const PRIMARY = '#1D4ED8';
+const DURATION_OPTIONS = [30, 45, 60, 90, 120];
 
 const achievements = [
   { icon: 'trophy-outline', title: 'Mais de 500 alunos formados', year: '2023' },
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
     carModel: user?.carModel || '',
     licenseCategory: user?.licenseCategory || '',
     pricePerHour: String(user?.pricePerHour || ''),
+    classDuration: user?.classDuration || 60,
     bio: 'Instrutor de direção com mais de 5 anos de experiência, especializado em formação de condutores seguros e conscientes.',
   });
 
@@ -135,6 +137,30 @@ export default function ProfileScreen() {
             editing={isEditing} onChangeText={(v) => setFormData(p => ({ ...p, pricePerHour: v }))}
             keyboardType="numeric"
           />
+          {/* Duração da Aula */}
+          <View style={styles.infoRow}>
+            <Ionicons name="timer-outline" size={18} color="#9CA3AF" style={styles.infoIcon} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Duração da Aula</Text>
+              {isEditing ? (
+                <View style={styles.durationRow}>
+                  {DURATION_OPTIONS.map(d => (
+                    <TouchableOpacity
+                      key={d}
+                      style={[styles.durationPill, formData.classDuration === d && styles.durationPillActive]}
+                      onPress={() => setFormData(p => ({ ...p, classDuration: d }))}
+                    >
+                      <Text style={[styles.durationPillText, formData.classDuration === d && styles.durationPillTextActive]}>
+                        {d}m
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.infoValue}>{formData.classDuration} min por aula</Text>
+              )}
+            </View>
+          </View>
           <InfoRow icon="time-outline" label="Experiência" value="5+ anos" editing={false} />
         </View>
 
@@ -284,6 +310,14 @@ const styles = StyleSheet.create({
     fontSize: 15, color: '#111827', borderBottomWidth: 1.5,
     borderBottomColor: PRIMARY, paddingVertical: 2, marginTop: 2,
   },
+  durationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  durationPill: {
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
+    backgroundColor: '#F3F4F6', borderWidth: 1.5, borderColor: '#E5E7EB',
+  },
+  durationPillActive: { backgroundColor: PRIMARY, borderColor: PRIMARY },
+  durationPillText: { fontSize: 12, fontWeight: '700', color: '#6B7280' },
+  durationPillTextActive: { color: '#FFF' },
   bioInput: {
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10,
     padding: 10, fontSize: 14, color: '#374151', minHeight: 80,

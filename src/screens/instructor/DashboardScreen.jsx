@@ -9,7 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSchedule } from '../../context/ScheduleContext';
 import { usePlans } from '../../context/PlansContext';
+import { useSession } from '../../context/SessionContext';
 import LeafletMapView from '../../components/shared/LeafletMapView';
+import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
 
 const PRIMARY = '#1D4ED8';
 const SCREEN_H = Dimensions.get('window').height;
@@ -69,6 +71,30 @@ const INITIAL_REQUESTS = [
     status: 'accepted', requestTime: '10 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5613, longitude: -46.6689 },
   },
+  {
+    id: '5', studentName: 'Larissa Mendes',
+    studentAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&h=80&fit=crop',
+    location: 'R. Frei Caneca, 800 - Consolação', distance: '1.5 km', estimatedTime: '5 min',
+    type: 'Aula Teórica', price: 60, rating: 4.6, phone: '(11) 94321-0987',
+    status: 'pending', requestTime: '11 min atrás', carOption: 'student',
+    coordinates: { latitude: -23.5528, longitude: -46.6475 },
+  },
+  {
+    id: '6', studentName: 'Rafael Torres',
+    studentAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop',
+    location: 'Av. Rebouças, 600 - Pinheiros', distance: '5.0 km', estimatedTime: '18 min',
+    type: 'Aula Prática', price: 90, rating: 4.5, phone: '(11) 93210-9876',
+    status: 'pending', requestTime: '14 min atrás', carOption: 'instructor',
+    coordinates: { latitude: -23.5580, longitude: -46.6720 },
+  },
+  {
+    id: '7', studentName: 'Camila Ramos',
+    studentAvatar: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop',
+    location: 'R. Haddock Lobo, 300 - Cerqueira César', distance: '2.7 km', estimatedTime: '10 min',
+    type: 'Simulado', price: 75, rating: 4.8, phone: '(11) 92109-8765',
+    status: 'pending', requestTime: '20 min atrás', carOption: 'student',
+    coordinates: { latitude: -23.5596, longitude: -46.6608 },
+  },
 ];
 
 const INITIAL_NOTIFICATIONS = [
@@ -109,6 +135,7 @@ export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
   const { addEvent, addContact } = useSchedule();
   const { getInstructorPlans, togglePlan, addPlan } = usePlans();
+  const { activeSession, elapsedSeconds, isCompleted, generateCode, startSession, endSession } = useSession();
 
   const [requests, setRequests] = useState(INITIAL_REQUESTS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
@@ -117,6 +144,8 @@ export default function DashboardScreen({ navigation }) {
   const [panelExpanded, setPanelExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'plans'
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [sessionCodeInput, setSessionCodeInput] = useState('');
 
   // New plan form state
   const [newPlanName, setNewPlanName] = useState('');
@@ -205,7 +234,7 @@ export default function DashboardScreen({ navigation }) {
       latitude: req.coordinates.latitude,
       longitude: req.coordinates.longitude,
       label: `R$ ${req.price}`,
-      color: req.status === 'accepted' ? '#16A34A' : '#EF4444',
+      color: req.status === 'accepted' ? '#16A34A' : '#F59E0B',
       type: 'default',
     })),
   ], [requests]);
@@ -228,10 +257,26 @@ export default function DashboardScreen({ navigation }) {
       description: `Aula de ${request.type} via app. Valor: R$ ${request.price}`,
       status: 'scheduled',
     });
+    // Generate a session code for this student (duration from instructor profile, default 60 min)
+    const durationMinutes = user?.classDuration || 60;
+    const code = generateCode(request.studentName, user?.name || 'Instrutor', durationMinutes);
     setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'accepted' } : r));
     setNotifications(prev => prev.map(n => n.requestId === requestId ? { ...n, read: true } : n));
     setSelectedRequest(null);
-    Alert.alert('Aula aceita!', `Aula com ${request.studentName} adicionada à agenda.`);
+    Alert.alert(
+      'Aula aceita! ✓',
+      `Aula com ${request.studentName} adicionada à agenda.\n\nCódigo da aula:\n${code}\n\nMostre ao aluno ou informe o código acima para iniciar o timer.`,
+    );
+  };
+
+  const handleStartSession = () => {
+    const ok = startSession(sessionCodeInput);
+    if (ok) {
+      setShowStartModal(false);
+      setSessionCodeInput('');
+    } else {
+      Alert.alert('Código inválido', 'Verifique o código informado pelo aluno e tente novamente.');
+    }
   };
 
   const handleRejectRequest = (requestId) => {
@@ -317,8 +362,31 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </View>
 
+        {/* ── Active Session ── */}
+        {activeSession ? (
+          <ActiveSessionCard
+            activeSession={activeSession}
+            elapsedSeconds={elapsedSeconds}
+            isCompleted={isCompleted}
+            isInstructor
+            onEnd={endSession}
+          />
+        ) : (
+          acceptedRequests.length > 0 && (
+            <TouchableOpacity
+              style={styles.startSessionBtn}
+              onPress={() => setShowStartModal(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="play-circle-outline" size={18} color="#FFF" />
+              <Text style={styles.startSessionBtnText}>Iniciar Aula</Text>
+              <Text style={styles.startSessionBtnSub}>Digite o código do aluno</Text>
+            </TouchableOpacity>
+          )
+        )}
+
         {/* ── Tab switcher ── */}
-        {panelExpanded && (
+        {!activeSession && panelExpanded && (
           <View style={styles.tabSwitcher}>
             <TouchableOpacity
               style={[styles.tabBtn, activeTab === 'requests' && styles.tabBtnActive]}
@@ -350,7 +418,7 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         {/* ── REQUESTS TAB ── */}
-        {panelExpanded && activeTab === 'requests' && (
+        {!activeSession && panelExpanded && activeTab === 'requests' && (
           pendingRequests.length === 0 ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
@@ -436,7 +504,7 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         {/* ── PLANS TAB ── */}
-        {panelExpanded && activeTab === 'plans' && (
+        {!activeSession && panelExpanded && activeTab === 'plans' && (
           <ScrollView
             style={styles.cardsList}
             contentContainerStyle={styles.cardsContent}
@@ -654,6 +722,41 @@ export default function DashboardScreen({ navigation }) {
         </SafeAreaView>
       </Modal>
 
+      {/* ── START SESSION MODAL ── */}
+      <Modal visible={showStartModal} transparent animationType="fade" onRequestClose={() => setShowStartModal(false)}>
+        <View style={styles.startModalOverlay}>
+          <View style={styles.startModalCard}>
+            <View style={styles.startModalHeader}>
+              <View style={styles.startModalIconBox}>
+                <Ionicons name="play-circle" size={28} color={PRIMARY} />
+              </View>
+              <Text style={styles.startModalTitle}>Iniciar Aula</Text>
+              <Text style={styles.startModalSub}>Digite o código de 6 dígitos exibido no app do aluno</Text>
+            </View>
+            <TextInput
+              style={styles.startModalInput}
+              placeholder="000000"
+              placeholderTextColor="#D1D5DB"
+              value={sessionCodeInput}
+              onChangeText={setSessionCodeInput}
+              keyboardType="number-pad"
+              maxLength={6}
+              textAlign="center"
+              autoFocus
+            />
+            <View style={styles.startModalActions}>
+              <TouchableOpacity style={styles.startModalCancelBtn} onPress={() => { setShowStartModal(false); setSessionCodeInput(''); }}>
+                <Text style={styles.startModalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.startModalConfirmBtn} onPress={handleStartSession}>
+                <Ionicons name="play" size={16} color="#FFF" />
+                <Text style={styles.startModalConfirmText}>Iniciar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── REQUEST DETAIL MODAL ── */}
       <Modal visible={!!selectedRequest} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelectedRequest(null)}>
         {selectedRequest && (
@@ -790,7 +893,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#F3F4F6',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  reqAccent: { width: 4, backgroundColor: '#EF4444' },
+  reqAccent: { width: 4, backgroundColor: '#F59E0B' },
   reqBody: { flex: 1, padding: 12, gap: 6 },
 
   reqTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -832,8 +935,8 @@ const styles = StyleSheet.create({
   tabBtnActive: { backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
   tabBtnText: { fontSize: 12, fontWeight: '600', color: '#9CA3AF' },
   tabBtnTextActive: { color: PRIMARY, fontWeight: '700' },
-  tabBadge: { backgroundColor: '#FEE2E2', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
-  tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#EF4444' },
+  tabBadge: { backgroundColor: '#FEF3C7', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
+  tabBadgeText: { fontSize: 10, fontWeight: '800', color: '#D97706' },
 
   // ── Plans tab ──
   plansHeader: {
@@ -943,4 +1046,48 @@ const styles = StyleSheet.create({
   modalRejectText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
   modalAcceptBtn: { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#16A34A', borderRadius: 14, paddingVertical: 14 },
   modalAcceptText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
+
+  // ── Start Session button ──
+  startSessionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: PRIMARY, borderRadius: 14,
+    marginHorizontal: 14, marginTop: 8, marginBottom: 4,
+    paddingHorizontal: 16, paddingVertical: 12,
+  },
+  startSessionBtnText: { fontSize: 15, fontWeight: '800', color: '#FFF', flex: 1 },
+  startSessionBtnSub: { fontSize: 11, color: '#BFDBFE', fontWeight: '500' },
+
+  // ── Start Session modal ──
+  startModalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center', justifyContent: 'center', padding: 24,
+  },
+  startModalCard: {
+    backgroundColor: '#FFF', borderRadius: 24, padding: 24, width: '100%', maxWidth: 360,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 12,
+  },
+  startModalHeader: { alignItems: 'center', marginBottom: 20, gap: 8 },
+  startModalIconBox: {
+    width: 56, height: 56, borderRadius: 28, backgroundColor: '#EFF6FF',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 4,
+  },
+  startModalTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  startModalSub: { fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 19 },
+  startModalInput: {
+    fontSize: 36, fontWeight: '800', color: '#111827', letterSpacing: 8,
+    borderWidth: 2, borderColor: '#DBEAFE', borderRadius: 16,
+    paddingVertical: 14, paddingHorizontal: 20, backgroundColor: '#F8FAFF',
+    marginBottom: 20, textAlign: 'center',
+  },
+  startModalActions: { flexDirection: 'row', gap: 10 },
+  startModalCancelBtn: {
+    flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
+    paddingVertical: 12, alignItems: 'center',
+  },
+  startModalCancelText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
+  startModalConfirmBtn: {
+    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: PRIMARY, borderRadius: 12, paddingVertical: 12,
+  },
+  startModalConfirmText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
 });
