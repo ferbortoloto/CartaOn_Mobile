@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Alert, Platform,
+  TextInput, Alert, Platform, PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,24 @@ import Avatar from '../../components/shared/Avatar';
 
 const PRIMARY = '#1D4ED8';
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
+
+const PRICE_MIN = 40;
+const PRICE_MAX = 180;
+const PRICE_TIERS = [
+  { price: 60,  commission: 20, label: 'Econômico',   color: '#16A34A' },
+  { price: 80,  commission: 15, label: 'Moderado',    color: '#2563EB' },
+  { price: 100, commission: 12, label: 'Recomendado', color: '#7C3AED' },
+  { price: 115, commission: 10, label: 'Premium',     color: '#0F172A' },
+];
+const TRACK_H = 6;
+const THUMB_R = 11;
+
+function getPriceInfo(price) {
+  if (price <= 60)  return PRICE_TIERS[0];
+  if (price <= 80)  return PRICE_TIERS[1];
+  if (price <= 100) return PRICE_TIERS[2];
+  return PRICE_TIERS[3];
+}
 
 const achievements = [
   { icon: 'trophy-outline', title: 'Mais de 500 alunos formados', year: '2023' },
@@ -23,9 +41,21 @@ const recentReviews = [
   { studentName: 'Maria Oliveira', rating: 4, comment: 'Muito profissional, me ajudou bastante.', date: '2 semanas atrás' },
 ];
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ route }) {
   const { user, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const scrollRef = useRef(null);
+  const profSectionY = useRef(0);
+
+  useEffect(() => {
+    if (route?.params?.startEditing) {
+      setIsEditing(true);
+      // Pequeno delay para o layout estar pronto antes de scrollar
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: profSectionY.current, animated: true });
+      }, 150);
+    }
+  }, [route?.params?.startEditing, route?.params?.t]);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -87,7 +117,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Avatar + Info */}
         <View style={styles.avatarCard}>
           <View style={styles.avatarWrapper}>
@@ -123,7 +153,10 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <View style={styles.section}>
+        <View
+          style={styles.section}
+          onLayout={(e) => { profSectionY.current = e.nativeEvent.layout.y; }}
+        >
           <Text style={styles.sectionTitle}>Informações Profissionais</Text>
           <InfoRow
             icon="car-outline" label="Veículo" value={formData.carModel}
@@ -133,11 +166,23 @@ export default function ProfileScreen() {
             icon="document-text-outline" label="Categoria CNH" value={formData.licenseCategory}
             editing={isEditing} onChangeText={(v) => setFormData(p => ({ ...p, licenseCategory: v }))}
           />
-          <InfoRow
-            icon="cash-outline" label="Valor por hora" value={`R$ ${formData.pricePerHour}`}
-            editing={isEditing} onChangeText={(v) => setFormData(p => ({ ...p, pricePerHour: v }))}
-            keyboardType="numeric"
-          />
+          {isEditing ? (
+            <View style={styles.infoRow}>
+              <Ionicons name="cash-outline" size={18} color="#9CA3AF" style={styles.infoIcon} />
+              <View style={[styles.infoContent, { paddingBottom: 4 }]}>
+                <Text style={styles.infoLabel}>Valor por hora</Text>
+                <PriceSlider
+                  value={formData.pricePerHour}
+                  onChange={(v) => setFormData(p => ({ ...p, pricePerHour: v }))}
+                />
+              </View>
+            </View>
+          ) : (
+            <InfoRow
+              icon="cash-outline" label="Valor por hora" value={`R$ ${formData.pricePerHour}`}
+              editing={false}
+            />
+          )}
           {/* Duração da Aula */}
           <View style={styles.infoRow}>
             <Ionicons name="timer-outline" size={18} color="#9CA3AF" style={styles.infoIcon} />
@@ -229,6 +274,118 @@ export default function ProfileScreen() {
   );
 }
 
+function PriceSlider({ value, onChange }) {
+  // Slider tem range visual fixo; o valor digitado pode ir além
+  const toRatio = (p) => Math.max(0, Math.min(1, (p - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)));
+  const fromRatio = (r) => Math.round(PRICE_MIN + r * (PRICE_MAX - PRICE_MIN));
+
+  const [inputText, setInputText] = useState(String(parseInt(value, 10) || 60));
+  const [ratio, setRatio] = useState(toRatio(parseInt(value, 10) || 60));
+  const [inputWidth, setInputWidth] = useState(24);
+  const startRef = useRef(toRatio(parseInt(value, 10) || 60));
+  const trackW = useRef(300);
+
+  const price = parseInt(inputText, 10) || 0;
+  const info = getPriceInfo(Math.max(1, price));
+
+  // Ref com handler atualizado a cada render — evita closure stale no PanResponder
+  const onSlide = useRef(null);
+  onSlide.current = (r) => {
+    const p = fromRatio(r);
+    setRatio(r);
+    setInputText(String(p));
+    onChange(String(p));
+  };
+
+  const pr = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (e) => {
+      const r = Math.max(0, Math.min(1, e.nativeEvent.locationX / trackW.current));
+      startRef.current = r;
+      onSlide.current(r);
+    },
+    onPanResponderMove: (_, gs) => {
+      const r = Math.max(0, Math.min(1, startRef.current + gs.dx / trackW.current));
+      onSlide.current(r);
+    },
+    onPanResponderRelease: (_, gs) => {
+      startRef.current = Math.max(0, Math.min(1, startRef.current + gs.dx / trackW.current));
+    },
+  })).current;
+
+  const handleTextChange = (text) => {
+    const cleaned = text.replace(/[^0-9]/g, '');
+    setInputText(cleaned);
+    const p = parseInt(cleaned, 10) || 0;
+    setRatio(toRatio(p));
+    onChange(cleaned);
+  };
+
+  return (
+    <View style={ps.wrap}>
+      {/* Card de info — preço digitável */}
+      <View style={[ps.card, { borderColor: info.color + '50', backgroundColor: info.color + '12' }]}>
+        <View>
+          <Text style={[ps.cardTier, { color: info.color }]}>{info.label}</Text>
+          <View style={ps.priceRow}>
+            <Text style={[ps.pricePrefix, { color: info.color }]}>R$</Text>
+            {/* Text oculto que mede a largura real do conteúdo */}
+            <Text
+              style={[ps.priceInput, { position: 'absolute', opacity: 0 }]}
+              onLayout={(e) => setInputWidth(e.nativeEvent.layout.width + 2)}
+            >
+              {inputText || '0'}
+            </Text>
+            <TextInput
+              style={[ps.priceInput, { color: info.color, width: inputWidth }]}
+              value={inputText}
+              onChangeText={handleTextChange}
+              keyboardType="numeric"
+              inputMode="numeric"
+              selectTextOnFocus
+            />
+            <Text style={ps.priceUnit}>/hora</Text>
+          </View>
+        </View>
+        <View style={[ps.commBadge, { backgroundColor: info.color }]}>
+          <Text style={ps.commPct}>{info.commission}%</Text>
+          <Text style={ps.commSub}>plataforma</Text>
+        </View>
+      </View>
+
+      {/* Track */}
+      <View style={ps.trackOuter}>
+        <View
+          style={ps.track}
+          onLayout={(e) => { trackW.current = e.nativeEvent.layout.width; }}
+          {...pr.panHandlers}
+        >
+          <View style={[StyleSheet.absoluteFillObject, ps.trackBg]} />
+          <View style={[ps.fill, { width: `${ratio * 100}%`, backgroundColor: info.color }]} />
+          {PRICE_TIERS.map(t => (
+            <View key={t.price} style={[ps.tick, { left: `${toRatio(t.price) * 100}%` }]} />
+          ))}
+          <View style={[ps.thumb, { left: `${ratio * 100}%`, borderColor: info.color }]} />
+        </View>
+
+        {/* Labels dos tiers */}
+        <View style={ps.tierLabelRow}>
+          {PRICE_TIERS.map(t => (
+            <View key={t.price} style={[ps.tierLabelItem, { left: `${toRatio(t.price) * 100}%` }]}>
+              <Text style={[ps.tierLabelText, price > t.price - 11 && price <= t.price + 10 && { color: t.color, fontWeight: '700' }]}>
+                R${t.price}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <Text style={ps.hint}>Preço maior = menor taxa da plataforma para você</Text>
+    </View>
+  );
+}
+
 function InfoRow({ icon, label, value, editing, onChangeText, keyboardType }) {
   return (
     <View style={styles.infoRow}>
@@ -249,6 +406,57 @@ function InfoRow({ icon, label, value, editing, onChangeText, keyboardType }) {
     </View>
   );
 }
+
+const ps = StyleSheet.create({
+  wrap: { marginTop: 10, marginBottom: 4 },
+
+  // Card de informação
+  card: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1.5, borderRadius: 12, padding: 12, marginBottom: 16,
+  },
+  cardTier: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
+  pricePrefix: { fontSize: 13, fontWeight: '700' },
+  priceInput: { fontSize: 18, fontWeight: '800', padding: 0 },
+  priceUnit: { fontSize: 12, fontWeight: '500', color: '#6B7280' },
+  commBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center' },
+  commPct: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+  commSub: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.8)' },
+
+  // Slider
+  trackOuter: { paddingHorizontal: 2, marginBottom: 4 },
+  track: {
+    height: TRACK_H, borderRadius: TRACK_H / 2,
+    marginBottom: 20,
+    // overflow visible para o thumb aparecer fora dos limites verticais
+  },
+  trackBg: { borderRadius: TRACK_H / 2, backgroundColor: '#E5E7EB' },
+  fill: { position: 'absolute', height: TRACK_H, borderRadius: TRACK_H / 2 },
+  tick: {
+    position: 'absolute',
+    top: -(10 - TRACK_H) / 2 - 2,
+    width: 2, height: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 1,
+    marginLeft: -1,
+  },
+  thumb: {
+    position: 'absolute',
+    top: -(THUMB_R * 2 - TRACK_H) / 2,
+    width: THUMB_R * 2, height: THUMB_R * 2, borderRadius: THUMB_R,
+    backgroundColor: '#FFF', borderWidth: 2.5,
+    marginLeft: -THUMB_R,
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 4,
+  },
+
+  // Labels dos tiers
+  tierLabelRow: { position: 'relative', height: 18 },
+  tierLabelItem: { position: 'absolute', alignItems: 'center', marginLeft: -16 },
+  tierLabelText: { fontSize: 10, color: '#9CA3AF', fontWeight: '500' },
+
+  hint: { fontSize: 11, color: '#9CA3AF', marginTop: 8, textAlign: 'center', fontStyle: 'italic' },
+});
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },

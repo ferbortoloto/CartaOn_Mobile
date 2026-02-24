@@ -313,20 +313,42 @@ export default function DashboardScreen({ navigation }) {
       {/* HEADER OVERLAY */}
       <SafeAreaView edges={['top']} style={styles.headerOverlay}>
         <View style={styles.headerCard}>
-          <View style={styles.headerLeft}>
-            <Avatar uri={user?.avatar} name={user?.name} size={40} />
-            <View>
-              <Text style={styles.headerGreeting}>Bem-vindo</Text>
-              <Text style={styles.headerName}>{user?.name || 'Instrutor CartaOn'}</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.bellBtn} onPress={() => setShowNotifications(true)} activeOpacity={0.8}>
-            <Ionicons name="notifications-outline" size={20} color="#374151" />
-            {unreadCount > 0 && (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{unreadCount}</Text>
+          {/* Row 1: avatar + name + bell */}
+          <View style={styles.headerRow}>
+            <View style={styles.headerLeft}>
+              <Avatar uri={user?.avatar} name={user?.name} size={40} />
+              <View>
+                <Text style={styles.headerGreeting}>Bem-vindo</Text>
+                <Text style={styles.headerName}>{user?.name || 'Instrutor CartaOn'}</Text>
               </View>
-            )}
+            </View>
+            <TouchableOpacity style={styles.bellBtn} onPress={() => setShowNotifications(true)} activeOpacity={0.8}>
+              <Ionicons name="notifications-outline" size={20} color="#374151" />
+              {unreadCount > 0 && (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>{unreadCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+          {/* Row 2: valor/hora + duração — compacto */}
+          <TouchableOpacity
+            style={styles.headerConfigRow}
+            onPress={() => navigation.navigate('Profile', { startEditing: true, t: Date.now() })}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="cash-outline" size={11} color="#6B7280" />
+            <Text style={styles.headerConfigText}>
+              {user?.pricePerHour ? `R$ ${user.pricePerHour}/h` : '—'}
+            </Text>
+            <View style={styles.headerStatDivider} />
+            <Ionicons name="timer-outline" size={11} color="#6B7280" />
+            <Text style={styles.headerConfigText}>
+              {user?.classDuration ? `${user.classDuration} min` : '60 min'}
+            </Text>
+            <View style={{ flex: 1 }} />
+            <Ionicons name="create-outline" size={11} color="#9CA3AF" />
+            <Text style={styles.headerConfigEditText}>Editar</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -839,11 +861,18 @@ const styles = StyleSheet.create({
   // ── Header ──
   headerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   headerCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, margin: 12, padding: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 6,
   },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerConfigRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    marginTop: 8, paddingTop: 7, borderTopWidth: 1, borderTopColor: '#F3F4F6',
+  },
+  headerConfigText: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  headerStatDivider: { width: 1, height: 12, backgroundColor: '#D1D5DB', marginHorizontal: 3 },
+  headerConfigEditText: { fontSize: 11, fontWeight: '500', color: '#9CA3AF' },
   headerGreeting: { fontSize: 10, fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase' },
   headerName: { fontSize: 14, fontWeight: '800', color: '#111827' },
   bellBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F9FAFB', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
@@ -871,6 +900,7 @@ const styles = StyleSheet.create({
   kpiNum: { fontSize: 15, fontWeight: '800' },
   kpiLbl: { fontSize: 10, fontWeight: '600' },
   kpiDivider: { width: 1, height: 28, backgroundColor: '#E5E7EB', marginHorizontal: 6 },
+
 
   // ── Section header ──
   sectionHeader: {
