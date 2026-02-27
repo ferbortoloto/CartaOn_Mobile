@@ -1,51 +1,39 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { Platform } from 'react-native';
+import { useAuth } from '../hooks/useAuth';
+import {
+  createSession,
+  getPendingSession,
+  startSessionByCode,
+  endSession,
+  subscribeToSession,
+} from '../services/session.service';
 
 const SessionContext = createContext(null);
 
-// ── localStorage helpers (web only, graceful fallback on native) ──
-const LS_KEY = 'cartaon_pending_sessions';
-
-function lsGet() {
-  if (Platform.OS !== 'web') return new Map();
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return new Map();
-    return new Map(JSON.parse(raw));
-  } catch { return new Map(); }
-}
-
-function lsSet(map) {
-  if (Platform.OS !== 'web') return;
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify([...map.entries()]));
-  } catch {}
-}
-
-function lsClear() {
-  if (Platform.OS !== 'web') return;
-  try { localStorage.removeItem(LS_KEY); } catch {}
-}
-
 export function SessionProvider({ children }) {
-  // Initialize from localStorage so the user tab can read codes set by the instructor tab
-  const [pendingSessions, setPendingSessions] = useState(() => lsGet());
+  const { user, isAuthenticated } = useAuth();
   const [activeSession, setActiveSession] = useState(null);
+  const [pendingSession, setPendingSession] = useState(null); // sessão com código gerado aguardando aluno
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const intervalRef = useRef(null);
+  const unsubscribeRef = useRef(null);
 
-  // Listen for storage changes from other tabs (web only)
+  // Carrega sessão pendente/ativa ao autenticar
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const handler = (e) => {
-      if (e.key === LS_KEY) {
-        setPendingSessions(lsGet());
-      }
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, []);
+    if (!isAuthenticated || !user) {
+      setActiveSession(null);
+      setPendingSession(null);
+      return;
+    }
+    if (user.role === 'instructor') {
+      loadPendingSession();
+    }
+    // Assina realtime para receber atualizações de sessão
+    startRealtime();
+    return () => stopRealtime();
+  }, [isAuthenticated, user?.id]);
 
+  // Timer da sessão ativa
   useEffect(() => {
     if (activeSession) {
       intervalRef.current = setInterval(() => {
@@ -53,63 +41,106 @@ export function SessionProvider({ children }) {
       }, 1000);
     } else {
       clearInterval(intervalRef.current);
+      setElapsedSeconds(0);
     }
     return () => clearInterval(intervalRef.current);
   }, [activeSession]);
 
-  const generateCode = useCallback((studentName, instructorName, durationMinutes = 60) => {
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setPendingSessions(prev => {
-      const next = new Map(prev);
-      next.set(code, { studentName, instructorName, durationMinutes });
-      lsSet(next); // persist for other tabs
-      return next;
-    });
-    return code;
-  }, []);
+  const loadPendingSession = async () => {
+    if (!user) return;
+    try {
+      const session = await getPendingSession(user.id);
+      if (session) setPendingSession(session);
+    } catch (error) {
+      console.error('Erro ao carregar sessão pendente:', error.message);
+    }
+  };
 
-  const startSession = useCallback((code) => {
-    const trimmed = code.trim();
-    // Check both in-memory and localStorage (instructor may be in a different tab)
-    const merged = new Map([...lsGet(), ...pendingSessions]);
-    const session = merged.get(trimmed);
-    if (!session) return false;
-    setActiveSession({ ...session, code: trimmed, startTime: Date.now() });
-    setElapsedSeconds(0);
-    setPendingSessions(prev => {
-      const next = new Map(prev);
-      next.delete(trimmed);
-      lsSet(next);
-      return next;
-    });
-    return true;
-  }, [pendingSessions]);
+  const startRealtime = () => {
+    if (!user) return;
+    unsubscribeRef.current = subscribeToSession(
+      user.role === 'instructor' ? user.id : user.id,
+      (updatedSession) => {
+        if (updatedSession.status === 'active') {
+          setActiveSession(updatedSession);
+          setPendingSession(null);
+          setElapsedSeconds(0);
+        } else if (updatedSession.status === 'completed') {
+          setActiveSession(null);
+          setPendingSession(null);
+        } else if (updatedSession.status === 'pending') {
+          setPendingSession(updatedSession);
+        }
+      }
+    );
+  };
 
-  const endSession = useCallback(() => {
-    setActiveSession(null);
-    setElapsedSeconds(0);
-    lsClear();
-  }, []);
+  const stopRealtime = () => {
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+  };
 
-  // Latest pending code (last inserted entry)
-  const latestPendingCode = pendingSessions.size > 0
-    ? [...pendingSessions.entries()][pendingSessions.size - 1]
-    : null;
+  // Instrutor gera código e cria sessão no banco
+  const generateCode = useCallback(async ({ studentId, eventId, durationMinutes }) => {
+    if (!user) return null;
+    try {
+      const session = await createSession({
+        eventId,
+        instructorId: user.id,
+        studentId,
+        durationMinutes: durationMinutes || user.class_duration || 60,
+      });
+      setPendingSession(session);
+      return session.code;
+    } catch (error) {
+      console.error('Erro ao gerar código:', error.message);
+      return null;
+    }
+  }, [user]);
 
-  const isCompleted = activeSession?.durationMinutes
-    ? elapsedSeconds >= activeSession.durationMinutes * 60
+  // Aluno entra com código e ativa a sessão
+  const startSession = useCallback(async (code) => {
+    if (!user) return false;
+    try {
+      const session = await startSessionByCode(code, user.id);
+      if (!session) return false;
+      setActiveSession(session);
+      setPendingSession(null);
+      setElapsedSeconds(0);
+      return true;
+    } catch (error) {
+      console.error('Erro ao iniciar sessão:', error.message);
+      return false;
+    }
+  }, [user]);
+
+  // Encerra sessão ativa
+  const endActiveSession = useCallback(async () => {
+    if (!activeSession) return;
+    try {
+      await endSession(activeSession.id);
+      setActiveSession(null);
+      setElapsedSeconds(0);
+    } catch (error) {
+      console.error('Erro ao encerrar sessão:', error.message);
+    }
+  }, [activeSession]);
+
+  const isCompleted = activeSession?.duration_minutes
+    ? elapsedSeconds >= activeSession.duration_minutes * 60
     : false;
 
   return (
     <SessionContext.Provider value={{
-      pendingSessions,
       activeSession,
+      pendingSession,
       elapsedSeconds,
       isCompleted,
-      latestPendingCode,
       generateCode,
       startSession,
-      endSession,
+      endSession: endActiveSession,
     }}>
       {children}
     </SessionContext.Provider>

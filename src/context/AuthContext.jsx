@@ -1,125 +1,89 @@
 import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  signIn,
+  signUp,
+  signOut,
+  getProfile,
+  updateProfile as updateProfileService,
+  getSession,
+  onAuthStateChange,
+} from '../services/auth.service';
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);       // profile completo do banco
+  const [session, setSession] = useState(null); // sessão do Supabase Auth
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem('instrutorgo_user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+    // Carrega sessão existente ao abrir o app
+    getSession().then(async (s) => {
+      if (s) {
+        try {
+          const profile = await getProfile(s.user.id);
+          setSession(s);
+          setUser(profile);
           setIsAuthenticated(true);
+        } catch {
+          setUser(null);
+          setIsAuthenticated(false);
         }
-      } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-    loadUser();
+      setLoading(false);
+    });
+
+    // Escuta mudanças de autenticação (login, logout, refresh de token)
+    const unsubscribe = onAuthStateChange(async (_event, s) => {
+      setSession(s);
+      if (s) {
+        try {
+          const profile = await getProfile(s.user.id);
+          setUser(profile);
+          setIsAuthenticated(true);
+        } catch {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
-  const login = (email, password) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        if (password !== 'admin') {
-          reject(new Error('Senha incorreta'));
-          return;
-        }
-
-        let mockUser;
-        if (email === 'instrutor@gmail.com') {
-          mockUser = {
-            id: 'instructor_1',
-            name: 'Carlos Silva',
-            email,
-            role: 'instructor',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            phone: '(11) 98765-4321',
-            licenseCategory: 'B',
-            carModel: 'Honda Civic 2023',
-            pricePerHour: 85,
-            rating: 4.9,
-            reviewsCount: 127,
-            isVerified: true,
-          };
-        } else if (email === 'user@gmail.com') {
-          mockUser = {
-            id: 'user_1',
-            name: 'João Silva',
-            email,
-            role: 'user',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-          };
-        } else {
-          reject(new Error('Usuário não encontrado'));
-          return;
-        }
-
-        try {
-          await AsyncStorage.setItem('instrutorgo_user', JSON.stringify(mockUser));
-          setUser(mockUser);
-          setIsAuthenticated(true);
-          resolve({ success: true, user: mockUser });
-        } catch (error) {
-          reject(error);
-        }
-      }, 1000);
-    });
+  const login = async (email, password) => {
+    const { profile } = await signIn(email, password);
+    setUser(profile);
+    setIsAuthenticated(true);
+    return { success: true, user: profile };
   };
 
   const register = async (formData) => {
-    const { name, email, phone, cpf, birthdate, role, photoUri,
-      licenseCategory, instructorRegNum, carModel, carOptions, pricePerHour, bio } = formData;
-
-    const id = `${role}_${Date.now()}`;
-    const avatarName = encodeURIComponent(name);
-    const newUser = {
-      id,
-      name,
-      email,
-      phone,
-      cpf,
-      birthdate,
-      role,
-      avatar: photoUri || `https://ui-avatars.com/api/?name=${avatarName}&background=820AD1&color=fff&size=200`,
-      ...(role === 'instructor' ? {
-        licenseCategory,
-        instructorRegNum,
-        carModel,
-        carOptions,
-        pricePerHour: parseFloat(pricePerHour) || 80,
-        bio,
-        rating: 0,
-        reviewsCount: 0,
-        isVerified: false,
-      } : {}),
-    };
-
-    await AsyncStorage.setItem('instrutorgo_user', JSON.stringify(newUser));
-    setUser(newUser);
+    const { profile } = await signUp(formData);
+    setUser(profile);
     setIsAuthenticated(true);
-    return { success: true, user: newUser };
+    return { success: true, user: profile };
+  };
+
+  const updateProfile = async (fields) => {
+    const updated = await updateProfileService(user.id, fields);
+    setUser(updated);
+    return { success: true };
   };
 
   const logout = async () => {
-    try {
-      await AsyncStorage.removeItem('instrutorgo_user');
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
+    await signOut();
     setUser(null);
+    setSession(null);
     setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, session, isAuthenticated, loading, login, logout, register, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -13,6 +13,8 @@ import { useSession } from '../../context/SessionContext';
 import LeafletMapView from '../../components/shared/LeafletMapView';
 import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
 import Avatar from '../../components/shared/Avatar';
+import { formatTravelTime } from '../../utils/travelTime';
+import { MeetingPointType } from '../../data/scheduleData';
 
 const PRIMARY = '#1D4ED8';
 const SCREEN_H = Dimensions.get('window').height;
@@ -47,6 +49,7 @@ const INITIAL_REQUESTS = [
     type: 'Aula Prática', price: 85, rating: 4.8, phone: '(11) 98765-4321',
     status: 'pending', requestTime: '2 min atrás', carOption: 'instructor',
     coordinates: { latitude: -23.5634, longitude: -46.6521 },
+    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Av. Paulista, 1000 - Bela Vista', coordinates: { latitude: -23.5634, longitude: -46.6521 } },
   },
   {
     id: '2', studentName: 'Pedro Santos',
@@ -55,6 +58,7 @@ const INITIAL_REQUESTS = [
     type: 'Aula Teórica', price: 60, rating: 4.9, phone: '(11) 97654-3210',
     status: 'pending', requestTime: '5 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5505, longitude: -46.6433 },
+    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Rua Augusta, 1500 - Consolação', coordinates: { latitude: -23.5505, longitude: -46.6433 } },
   },
   {
     id: '3', studentName: 'Maria Oliveira',
@@ -63,6 +67,7 @@ const INITIAL_REQUESTS = [
     type: 'Simulado', price: 70, rating: 5.0, phone: '(11) 96543-2109',
     status: 'pending', requestTime: '8 min atrás', carOption: 'instructor',
     coordinates: { latitude: -23.5669, longitude: -46.6555 },
+    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Alameda Santos, 2000 - Jardim Paulista', coordinates: { latitude: -23.5669, longitude: -46.6555 } },
   },
   {
     id: '4', studentName: 'João Silva',
@@ -71,6 +76,7 @@ const INITIAL_REQUESTS = [
     type: 'Aula Prática', price: 85, rating: 4.7, phone: '(11) 95432-1098',
     status: 'accepted', requestTime: '10 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5613, longitude: -46.6689 },
+    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Rua Oscar Freire, 500 - Pinheiros', coordinates: { latitude: -23.5613, longitude: -46.6689 } },
   },
   {
     id: '5', studentName: 'Larissa Mendes',
@@ -79,6 +85,7 @@ const INITIAL_REQUESTS = [
     type: 'Aula Teórica', price: 60, rating: 4.6, phone: '(11) 94321-0987',
     status: 'pending', requestTime: '11 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5528, longitude: -46.6475 },
+    meetingPoint: { type: MeetingPointType.INSTRUCTOR_LOCATION, address: 'Av. Paulista, 500 - Bela Vista (Autoescola)', coordinates: { latitude: -23.5634, longitude: -46.6543 } },
   },
   {
     id: '6', studentName: 'Rafael Torres',
@@ -87,6 +94,7 @@ const INITIAL_REQUESTS = [
     type: 'Aula Prática', price: 90, rating: 4.5, phone: '(11) 93210-9876',
     status: 'pending', requestTime: '14 min atrás', carOption: 'instructor',
     coordinates: { latitude: -23.5580, longitude: -46.6720 },
+    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Av. Rebouças, 600 - Pinheiros', coordinates: { latitude: -23.5580, longitude: -46.6720 } },
   },
   {
     id: '7', studentName: 'Camila Ramos',
@@ -95,6 +103,7 @@ const INITIAL_REQUESTS = [
     type: 'Simulado', price: 75, rating: 4.8, phone: '(11) 92109-8765',
     status: 'pending', requestTime: '20 min atrás', carOption: 'student',
     coordinates: { latitude: -23.5596, longitude: -46.6608 },
+    meetingPoint: { type: MeetingPointType.CUSTOM, address: 'R. Haddock Lobo, 300 - Cerqueira César', coordinates: { latitude: -23.5596, longitude: -46.6608 } },
   },
 ];
 
@@ -134,7 +143,7 @@ const NOTIF_STYLE = {
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
-  const { addEvent, addContact } = useSchedule();
+  const { addEvent, addContact, checkTravelConflict } = useSchedule();
   const { getInstructorPlans, togglePlan, addPlan } = usePlans();
   const { activeSession, elapsedSeconds, isCompleted, generateCode, startSession, endSession } = useSession();
 
@@ -240,34 +249,81 @@ export default function DashboardScreen({ navigation }) {
     })),
   ], [requests]);
 
-  const handleAcceptRequest = (requestId) => {
-    const request = requests.find(r => r.id === requestId);
-    if (!request) return;
+  // Calcula info de deslocamento para uma solicitação pendente,
+  // considerando que a aula seria criada ~2h a partir de agora.
+  const getRequestTravelInfo = (request) => {
+    const durationMinutes = user?.classDuration || 60;
+    const newStart = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const newEnd = new Date(newStart.getTime() + durationMinutes * 60 * 1000);
+    const coords = request.meetingPoint?.coordinates || null;
+    return checkTravelConflict(newStart.toISOString(), newEnd.toISOString(), coords);
+  };
+
+  const getMeetingPointLabel = (request) => {
+    if (!request.meetingPoint) return request.location;
+    if (request.meetingPoint.type === MeetingPointType.INSTRUCTOR_LOCATION) return 'Local do instrutor';
+    if (request.meetingPoint.type === MeetingPointType.STUDENT_HOME) return 'Casa do aluno';
+    return 'Local personalizado';
+  };
+
+  const doAcceptRequest = (request) => {
     const newContact = addContact({
       name: request.studentName,
       email: `${request.studentName.toLowerCase().replace(' ', '.')}@email.com`,
       phone: request.phone, status: 'active',
       notes: `Aluno solicitou aula de ${request.type}`,
     });
+    const durationMinutes = user?.classDuration || 60;
     addEvent({
       title: `Aula de ${request.type} - ${request.studentName}`,
       type: 'class', priority: 'medium',
       startDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      endDateTime:   new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-      contactId: newContact?.id, location: request.location,
+      endDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + durationMinutes * 60 * 1000).toISOString(),
+      contactId: newContact?.id, location: request.meetingPoint?.address || request.location,
+      meetingPoint: request.meetingPoint,
       description: `Aula de ${request.type} via app. Valor: R$ ${request.price}`,
       status: 'scheduled',
     });
-    // Generate a session code for this student (duration from instructor profile, default 60 min)
-    const durationMinutes = user?.classDuration || 60;
     const code = generateCode(request.studentName, user?.name || 'Instrutor', durationMinutes);
-    setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'accepted' } : r));
-    setNotifications(prev => prev.map(n => n.requestId === requestId ? { ...n, read: true } : n));
+    setRequests(prev => prev.map(r => r.id === request.id ? { ...r, status: 'accepted' } : r));
+    setNotifications(prev => prev.map(n => n.requestId === request.id ? { ...n, read: true } : n));
     setSelectedRequest(null);
     Alert.alert(
       'Aula aceita! ✓',
       `Aula com ${request.studentName} adicionada à agenda.\n\nCódigo da aula:\n${code}\n\nMostre ao aluno ou informe o código acima para iniciar o timer.`,
     );
+  };
+
+  const handleAcceptRequest = (requestId) => {
+    const request = requests.find(r => r.id === requestId);
+    if (!request) return;
+
+    const travelInfo = getRequestTravelInfo(request);
+
+    if (travelInfo.hasIssue) {
+      const lines = [];
+      if (travelInfo.prevEvent && travelInfo.prevCheck.status !== 'ok') {
+        lines.push(`• Aula anterior termina em ${travelInfo.prevGap} min`);
+        lines.push(`  Deslocamento necessário: ${formatTravelTime(travelInfo.travelTimeToPrev)}`);
+      }
+      if (travelInfo.nextEvent && travelInfo.nextCheck.status !== 'ok') {
+        lines.push(`• Próxima aula começa em ${travelInfo.nextGap} min`);
+        lines.push(`  Deslocamento necessário: ${formatTravelTime(travelInfo.travelTimeToNext)}`);
+      }
+      const severity = travelInfo.prevCheck.status === 'conflict' || travelInfo.nextCheck.status === 'conflict'
+        ? 'Conflito de horário'
+        : 'Atenção: horário apertado';
+      Alert.alert(
+        severity,
+        `Pode haver pouco tempo para se deslocar até ${getMeetingPointLabel(request)}.\n\n${lines.join('\n')}\n\nDeseja aceitar mesmo assim?`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Aceitar mesmo assim', style: 'destructive', onPress: () => doAcceptRequest(request) },
+        ],
+      );
+    } else {
+      doAcceptRequest(request);
+    }
   };
 
   const handleStartSession = () => {
@@ -456,14 +512,25 @@ export default function DashboardScreen({ navigation }) {
             >
               {pendingRequests.map(req => {
                 const tc = TYPE_COLOR[req.type] || { bg: '#F3F4F6', text: '#6B7280' };
+                const travelInfo = getRequestTravelInfo(req);
+                const travelStatus = travelInfo.hasIssue
+                  ? (travelInfo.prevCheck?.status === 'conflict' || travelInfo.nextCheck?.status === 'conflict'
+                    ? 'conflict' : 'warning')
+                  : 'ok';
+                const travelColor = travelStatus === 'conflict' ? '#EF4444' : travelStatus === 'warning' ? '#D97706' : '#6B7280';
+                const travelBg = travelStatus === 'conflict' ? '#FEF2F2' : travelStatus === 'warning' ? '#FFFBEB' : null;
+                const travelMin = Math.max(
+                  travelInfo.travelTimeToPrev || 0,
+                  travelInfo.travelTimeToNext || 0,
+                );
                 return (
                   <TouchableOpacity
                     key={req.id}
-                    style={styles.reqCard}
+                    style={[styles.reqCard, travelStatus === 'conflict' && styles.reqCardConflict]}
                     onPress={() => setSelectedRequest(req)}
                     activeOpacity={0.88}
                   >
-                    <View style={styles.reqAccent} />
+                    <View style={[styles.reqAccent, travelStatus !== 'ok' && { backgroundColor: travelColor }]} />
                     <View style={styles.reqBody}>
                       <View style={styles.reqTopRow}>
                         <Avatar uri={req.studentAvatar} name={req.studentName} size={40} />
@@ -473,12 +540,8 @@ export default function DashboardScreen({ navigation }) {
                             <View style={[styles.typeBadge, { backgroundColor: tc.bg }]}>
                               <Text style={[styles.typeBadgeText, { color: tc.text }]}>{req.type}</Text>
                             </View>
-                            <View style={[styles.typeBadge, req.carOption === 'student'
-                              ? { backgroundColor: '#EFF6FF' }
-                              : { backgroundColor: '#EFF6FF' }]}>
-                              <Text style={[styles.typeBadgeText, req.carOption === 'student'
-                                ? { color: '#2563EB' }
-                                : { color: PRIMARY }]}>
+                            <View style={[styles.typeBadge, { backgroundColor: '#EFF6FF' }]}>
+                              <Text style={[styles.typeBadgeText, { color: PRIMARY }]}>
                                 {req.carOption === 'student' ? 'Carro do aluno' : 'Carro instrutor'}
                               </Text>
                             </View>
@@ -490,10 +553,21 @@ export default function DashboardScreen({ navigation }) {
                         </View>
                         <Text style={styles.reqPrice}>R$ {req.price}</Text>
                       </View>
+
+                      {/* Meeting point */}
                       <View style={styles.reqLocRow}>
-                        <Ionicons name="location-outline" size={12} color="#9CA3AF" />
-                        <Text style={styles.reqLocText} numberOfLines={1}>{req.location}</Text>
+                        <Ionicons
+                          name={req.meetingPoint?.type === MeetingPointType.STUDENT_HOME ? 'home-outline' :
+                                req.meetingPoint?.type === MeetingPointType.INSTRUCTOR_LOCATION ? 'business-outline' :
+                                'location-outline'}
+                          size={12} color="#9CA3AF"
+                        />
+                        <Text style={styles.reqLocText} numberOfLines={1}>
+                          {req.meetingPoint?.address || req.location}
+                        </Text>
                       </View>
+
+                      {/* Distance + travel time row */}
                       <View style={styles.reqMetaRow}>
                         <Ionicons name="navigate-outline" size={11} color="#6B7280" />
                         <Text style={styles.reqMetaText}>{req.distance}</Text>
@@ -502,6 +576,22 @@ export default function DashboardScreen({ navigation }) {
                         <Text style={styles.reqMetaText}>{req.estimatedTime}</Text>
                         <Text style={styles.reqAgo}>{req.requestTime}</Text>
                       </View>
+
+                      {/* Travel conflict badge */}
+                      {travelStatus !== 'ok' && travelMin > 0 && (
+                        <View style={[styles.travelWarningRow, { backgroundColor: travelBg }]}>
+                          <Ionicons
+                            name={travelStatus === 'conflict' ? 'close-circle-outline' : 'warning-outline'}
+                            size={13} color={travelColor}
+                          />
+                          <Text style={[styles.travelWarningText, { color: travelColor }]}>
+                            {travelStatus === 'conflict'
+                              ? `Conflito: ${formatTravelTime(travelMin)} de deslocamento necessário`
+                              : `Atenção: ${formatTravelTime(travelMin)} de deslocamento (pouco tempo)`}
+                          </Text>
+                        </View>
+                      )}
+
                       <View style={styles.reqActions}>
                         <TouchableOpacity style={styles.rejectBtn} onPress={() => handleRejectRequest(req.id)}>
                           <Ionicons name="close" size={13} color="#EF4444" />
@@ -812,7 +902,13 @@ export default function DashboardScreen({ navigation }) {
                   label="Veículo"
                   value={selectedRequest.carOption === 'student' ? 'Carro do aluno' : 'Carro do instrutor'}
                 />
-                <DetailRow icon="location-outline" label="Local"        value={selectedRequest.location} />
+                <DetailRow
+                  icon={selectedRequest.meetingPoint?.type === MeetingPointType.STUDENT_HOME ? 'home-outline' :
+                        selectedRequest.meetingPoint?.type === MeetingPointType.INSTRUCTOR_LOCATION ? 'business-outline' :
+                        'location-outline'}
+                  label="Local de encontro"
+                  value={selectedRequest.meetingPoint?.address || selectedRequest.location}
+                />
                 <DetailRow icon="call-outline"     label="Contato"      value={selectedRequest.phone} />
                 <View style={styles.detailGrid}>
                   <View style={styles.detailGridItem}>
@@ -821,7 +917,7 @@ export default function DashboardScreen({ navigation }) {
                   </View>
                   <View style={styles.detailGridItem}>
                     <Text style={styles.detailGridVal}>{selectedRequest.estimatedTime}</Text>
-                    <Text style={styles.detailGridLbl}>Tempo estimado</Text>
+                    <Text style={styles.detailGridLbl}>Deslocamento</Text>
                   </View>
                 </View>
               </View>
@@ -921,7 +1017,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#F3F4F6',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
+  reqCardConflict: { borderColor: '#FECACA' },
   reqAccent: { width: 4, backgroundColor: '#F59E0B' },
+  travelWarningRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5,
+  },
+  travelWarningText: { fontSize: 11, fontWeight: '600', flex: 1 },
   reqBody: { flex: 1, padding: 12, gap: 6 },
 
   reqTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

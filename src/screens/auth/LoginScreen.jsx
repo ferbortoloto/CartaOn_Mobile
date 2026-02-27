@@ -98,7 +98,7 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.hintBox}>
                 <Ionicons name="information-circle-outline" size={14} color="#1D4ED8" />
                 <Text style={styles.hintText}>
-                  Demo: instrutor@gmail.com ou user@gmail.com · senha: admin
+                  Novo por aqui? Crie sua conta gratuitamente clicando em "Criar conta".
                 </Text>
               </View>
 

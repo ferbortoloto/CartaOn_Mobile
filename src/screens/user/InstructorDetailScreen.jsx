@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, Platform,
+  ScrollView, Alert, Platform, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AvailabilityViewer from '../../components/user/AvailabilityViewer';
 import Avatar from '../../components/shared/Avatar';
 import { usePlans } from '../../context/PlansContext';
+import { useAuth } from '../../hooks/useAuth';
+import { MeetingPointType } from '../../data/scheduleData';
 
 const PRIMARY = '#1D4ED8';
 
@@ -41,15 +43,26 @@ function StarRow({ rating, size = 14, color = '#EAB308' }) {
 export default function InstructorDetailScreen({ route, navigation }) {
   const { instructor } = route.params;
   const { getActivePlans } = usePlans();
+  const { user } = useAuth();
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [carChoice, setCarChoice] = useState(
     instructor.carOptions === 'student' ? 'student' : 'instructor',
   );
+  const [meetingType, setMeetingType] = useState(
+    user?.address ? MeetingPointType.STUDENT_HOME : MeetingPointType.INSTRUCTOR_LOCATION
+  );
+  const [customAddress, setCustomAddress] = useState('');
 
   const plans = getActivePlans(instructor.id);
 
   const catColor = instructor.licenseCategory === 'A' ? '#EA580C' : '#2563EB';
+
+  const getMeetingPointLabel = () => {
+    if (meetingType === MeetingPointType.STUDENT_HOME) return user?.address || 'Minha casa';
+    if (meetingType === MeetingPointType.INSTRUCTOR_LOCATION) return instructor.location || 'Local do instrutor';
+    return customAddress || 'Local personalizado';
+  };
 
   const handleSchedule = () => {
     if (selectedSlots.length === 0) {
@@ -60,13 +73,22 @@ export default function InstructorDetailScreen({ route, navigation }) {
       }
       return;
     }
+    if (meetingType === MeetingPointType.CUSTOM && !customAddress.trim()) {
+      if (Platform.OS === 'web') {
+        window.alert('Informe o endereço do local de encontro.');
+      } else {
+        Alert.alert('Local de encontro', 'Informe o endereço do local de encontro.');
+      }
+      return;
+    }
     const dateStr = selectedDate
       ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
       : '';
     const carLabel = carChoice === 'student'
       ? 'Seu carro'
       : `Carro do instrutor${instructor.carModel ? ` (${instructor.carModel})` : ''}`;
-    const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\nVeículo: ${carLabel}\n\nAguarde a confirmação do instrutor.`;
+    const meetingLabel = getMeetingPointLabel();
+    const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\nVeículo: ${carLabel}\nLocal de encontro: ${meetingLabel}\n\nAguarde a confirmação do instrutor.`;
     if (Platform.OS === 'web') {
       window.alert(`Aula Solicitada!\n\n${msg}`);
       navigation.goBack();
@@ -263,6 +285,90 @@ export default function InstructorDetailScreen({ route, navigation }) {
             </View>
           )}
 
+          {/* Meeting point selector */}
+          <View style={styles.meetingSection}>
+            <Text style={styles.carSelectorLabel}>Local de encontro</Text>
+            <View style={styles.meetingChipRow}>
+              {[
+                {
+                  v: MeetingPointType.STUDENT_HOME,
+                  label: 'Minha casa',
+                  icon: 'home-outline',
+                  disabled: !user?.address,
+                },
+                {
+                  v: MeetingPointType.INSTRUCTOR_LOCATION,
+                  label: 'Local do instrutor',
+                  icon: 'location-outline',
+                  disabled: false,
+                },
+                {
+                  v: MeetingPointType.CUSTOM,
+                  label: 'Outro local',
+                  icon: 'map-outline',
+                  disabled: false,
+                },
+              ].map(opt => (
+                <TouchableOpacity
+                  key={opt.v}
+                  style={[
+                    styles.carChip,
+                    meetingType === opt.v && styles.carChipActive,
+                    opt.disabled && styles.carChipDisabled,
+                  ]}
+                  onPress={() => !opt.disabled && setMeetingType(opt.v)}
+                  activeOpacity={opt.disabled ? 1 : 0.8}
+                >
+                  <Ionicons
+                    name={opt.icon}
+                    size={13}
+                    color={
+                      opt.disabled ? '#D1D5DB' :
+                      meetingType === opt.v ? '#FFF' : '#6B7280'
+                    }
+                  />
+                  <Text style={[
+                    styles.carChipText,
+                    meetingType === opt.v && styles.carChipTextActive,
+                    opt.disabled && styles.carChipTextDisabled,
+                  ]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Show address hint or custom input */}
+            {meetingType === MeetingPointType.STUDENT_HOME && user?.address ? (
+              <View style={styles.meetingAddressRow}>
+                <Ionicons name="location-outline" size={13} color={PRIMARY} />
+                <Text style={styles.meetingAddressText} numberOfLines={2}>{user.address}</Text>
+              </View>
+            ) : meetingType === MeetingPointType.STUDENT_HOME && !user?.address ? (
+              <View style={styles.meetingAddressRow}>
+                <Ionicons name="information-circle-outline" size={13} color="#9CA3AF" />
+                <Text style={[styles.meetingAddressText, { color: '#9CA3AF' }]}>
+                  Cadastre seu endereço no perfil para usar esta opção
+                </Text>
+              </View>
+            ) : meetingType === MeetingPointType.INSTRUCTOR_LOCATION ? (
+              <View style={styles.meetingAddressRow}>
+                <Ionicons name="location-outline" size={13} color={PRIMARY} />
+                <Text style={styles.meetingAddressText} numberOfLines={2}>
+                  {instructor.location || 'Local informado pelo instrutor'}
+                </Text>
+              </View>
+            ) : (
+              <TextInput
+                style={styles.meetingCustomInput}
+                placeholder="Digite o endereço do local de encontro"
+                placeholderTextColor="#9CA3AF"
+                value={customAddress}
+                onChangeText={setCustomAddress}
+              />
+            )}
+          </View>
+
           <AvailabilityViewer
             instructorId={instructor.id}
             onSlotsSelected={(slots, date) => {
@@ -418,6 +524,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10, marginBottom: 14,
   },
   carInfoText: { fontSize: 12, color: PRIMARY, fontWeight: '600', flex: 1 },
+
+  meetingSection: { marginBottom: 14 },
+  meetingChipRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 8 },
+  carChipDisabled: { backgroundColor: '#F3F4F6', borderColor: '#E5E7EB', opacity: 0.6 },
+  carChipTextDisabled: { color: '#D1D5DB' },
+  meetingAddressRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
+    backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10,
+  },
+  meetingAddressText: { fontSize: 12, color: PRIMARY, fontWeight: '500', flex: 1, lineHeight: 18 },
+  meetingCustomInput: {
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, padding: 10,
+    fontSize: 13, color: '#111827',
+  },
 
   reviewCard: {
     borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 12, marginTop: 12,

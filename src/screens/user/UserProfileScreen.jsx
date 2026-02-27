@@ -22,14 +22,16 @@ const RECENT_CLASSES = [
 ];
 
 export default function UserProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name || 'Aluno CartaOn');
   const [email, setEmail] = useState(user?.email || 'user@gmail.com');
-  const [phone, setPhone] = useState('(11) 98765-4321');
-  const [goal, setGoal] = useState('Categoria B');
+  const [phone, setPhone] = useState(user?.phone || '(11) 98765-4321');
+  const [goal, setGoal] = useState(user?.goal || 'Categoria B');
+  const [address, setAddress] = useState(user?.address || '');
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    await updateProfile({ name, phone, goal, address });
     setEditing(false);
     Alert.alert('Perfil atualizado!', 'Suas informações foram salvas com sucesso.');
   };
@@ -139,6 +141,16 @@ export default function UserProfileScreen() {
             editing={editing}
             onChange={setGoal}
           />
+          <AddressHint />
+          <InfoField
+            icon="location-outline"
+            label="Endereço residencial (opcional)"
+            value={address}
+            editing={editing}
+            onChange={setAddress}
+            placeholder="Ex: Rua das Flores, 123 - Vila Madalena"
+            last
+          />
         </View>
 
         {/* Recent classes */}
@@ -172,9 +184,23 @@ export default function UserProfileScreen() {
   );
 }
 
-function InfoField({ icon, label, value, editing, onChange, keyboardType }) {
+function AddressHint() {
   return (
-    <View style={styles.infoField}>
+    <View style={styles.addressHint}>
+      <Ionicons name="location-outline" size={16} color="#1D4ED8" style={{ marginTop: 1 }} />
+      <View style={styles.addressHintBody}>
+        <Text style={styles.addressHintTitle}>Por que informar meu endereço?</Text>
+        <Text style={styles.addressHintText}>
+          Seu endereço permite que os instrutores calculem o tempo de deslocamento até você e evitem conflitos de horário entre aulas.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function InfoField({ icon, label, value, editing, onChange, keyboardType, placeholder, last }) {
+  return (
+    <View style={[styles.infoField, last && { borderBottomWidth: 0 }]}>
       <View style={styles.infoFieldLabel}>
         <Ionicons name={icon} size={14} color="#9CA3AF" />
         <Text style={styles.infoFieldLabelText}>{label}</Text>
@@ -186,9 +212,13 @@ function InfoField({ icon, label, value, editing, onChange, keyboardType }) {
           onChangeText={onChange}
           keyboardType={keyboardType}
           autoCapitalize="none"
+          placeholder={placeholder}
+          placeholderTextColor="#9CA3AF"
         />
       ) : (
-        <Text style={styles.infoFieldValue}>{value}</Text>
+        <Text style={[styles.infoFieldValue, !value && { color: '#9CA3AF', fontStyle: 'italic' }]}>
+          {value || 'Não informado'}
+        </Text>
       )}
     </View>
   );
@@ -248,6 +278,15 @@ const styles = StyleSheet.create({
   achievementsRow: { flexDirection: 'row', gap: 8 },
   achievementItem: { flex: 1, alignItems: 'center', borderRadius: 12, paddingVertical: 12, gap: 5 },
   achievementLabel: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+
+  addressHint: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    backgroundColor: '#EFF6FF', borderRadius: 12, padding: 12,
+    marginBottom: 4, borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  addressHintBody: { flex: 1 },
+  addressHintTitle: { fontSize: 12, fontWeight: '700', color: '#1D4ED8', marginBottom: 3 },
+  addressHintText: { fontSize: 12, color: '#3B82F6', lineHeight: 17 },
 
   infoField: { borderBottomWidth: 1, borderBottomColor: '#F3F4F6', paddingVertical: 12 },
   infoFieldLabel: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
