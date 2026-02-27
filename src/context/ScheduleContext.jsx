@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger';
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -128,7 +129,7 @@ export const ScheduleProvider = ({ children }) => {
         dispatch({ type: ACTIONS.SET_REQUESTS, payload: requests });
       }
     } catch (error) {
-      console.error('Erro ao carregar agenda:', error.message);
+      logger.error('Erro ao carregar agenda:', error.message);
     } finally {
       dispatch({ type: ACTIONS.SET_LOADING, payload: false });
     }

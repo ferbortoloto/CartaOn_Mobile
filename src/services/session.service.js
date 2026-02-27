@@ -1,10 +1,25 @@
 import { supabase } from '../lib/supabase';
 
 /**
+ * Gera um código de sessão de 6 dígitos criptograficamente seguro.
+ * Usa crypto.getRandomValues() (disponível no Hermes/React Native ≥ 0.71).
+ * Fallback para Math.random() em ambientes sem suporte (não deve ocorrer no Expo 52).
+ */
+function generateSessionCode() {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return String(100000 + (buf[0] % 900000));
+  }
+  // Fallback (desenvolvimento/ambientes legados)
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+/**
  * Cria uma sessão pendente com código de 6 dígitos.
  */
 export async function createSession({ eventId, instructorId, studentId, durationMinutes }) {
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const code = generateSessionCode();
 
   const { data, error } = await supabase
     .from('sessions')
@@ -48,6 +63,7 @@ export async function startSessionByCode(code, studentId) {
     .select('*')
     .eq('code', code.trim())
     .eq('status', 'pending')
+    .eq('student_id', studentId)  // garante que só o aluno correto ativa o código
     .maybeSingle();
   if (findError) throw findError;
   if (!session) return null;

@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../hooks/useAuth';
+import { mapAuthError } from '../../utils/authErrors';
 
 const CATEGORY_OPTIONS = ['A', 'B', 'A+B'];
 
@@ -141,7 +142,9 @@ export default function RegisterScreen({ navigation }) {
     if (!cpf.trim() || cpf.replace(/\D/g, '').length !== 11) return 'Informe um CPF válido (11 dígitos).';
     if (!birthdate.trim() || birthdate.replace(/\D/g, '').length !== 8)
       return 'Informe sua data de nascimento (DD/MM/AAAA).';
-    if (!password || password.length < 6) return 'A senha deve ter no mínimo 6 caracteres.';
+    if (!password || password.length < 8) return 'A senha deve ter no mínimo 8 caracteres.';
+    if (!/[A-Z]/.test(password)) return 'A senha deve conter ao menos uma letra maiúscula.';
+    if (!/[0-9]/.test(password)) return 'A senha deve conter ao menos um número.';
     if (password !== confirmPassword) return 'As senhas não coincidem.';
     if (role === 'instructor') {
       if (!instructorRegNum.trim()) return 'Informe o número de registro de instrutor.';
@@ -152,9 +155,9 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const handleRegister = async () => {
-    const error = validate();
-    if (error) {
-      Alert.alert('Dados incompletos', error);
+    const validationError = validate();
+    if (validationError) {
+      Alert.alert('Dados incompletos', validationError);
       return;
     }
     setLoading(true);
@@ -177,7 +180,7 @@ export default function RegisterScreen({ navigation }) {
         bio: bio.trim(),
       });
     } catch (err) {
-      Alert.alert('Erro ao cadastrar', err.message || 'Tente novamente.');
+      Alert.alert('Erro ao cadastrar', mapAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -337,7 +340,7 @@ export default function RegisterScreen({ navigation }) {
               <Field label="Senha" icon="lock-closed-outline">
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mín. 8 chars, maiúscula e número"
                   placeholderTextColor="#9CA3AF"
                   value={password}
                   onChangeText={setPassword}

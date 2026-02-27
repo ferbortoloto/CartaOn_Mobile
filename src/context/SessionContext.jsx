@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { logger } from '../utils/logger';
 import {
   createSession,
   getPendingSession,
@@ -52,7 +53,7 @@ export function SessionProvider({ children }) {
       const session = await getPendingSession(user.id);
       if (session) setPendingSession(session);
     } catch (error) {
-      console.error('Erro ao carregar sessão pendente:', error.message);
+      logger.error('Erro ao carregar sessão pendente:', error.message);
     }
   };
 
@@ -95,7 +96,7 @@ export function SessionProvider({ children }) {
       setPendingSession(session);
       return session.code;
     } catch (error) {
-      console.error('Erro ao gerar código:', error.message);
+      logger.error('Erro ao gerar código:', error.message);
       return null;
     }
   }, [user]);
@@ -111,7 +112,7 @@ export function SessionProvider({ children }) {
       setElapsedSeconds(0);
       return true;
     } catch (error) {
-      console.error('Erro ao iniciar sessão:', error.message);
+      logger.error('Erro ao iniciar sessão:', error.message);
       return false;
     }
   }, [user]);
@@ -124,7 +125,7 @@ export function SessionProvider({ children }) {
       setActiveSession(null);
       setElapsedSeconds(0);
     } catch (error) {
-      console.error('Erro ao encerrar sessão:', error.message);
+      logger.error('Erro ao encerrar sessão:', error.message);
     }
   }, [activeSession]);
 

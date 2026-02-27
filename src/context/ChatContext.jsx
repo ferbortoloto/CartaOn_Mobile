@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { logger } from '../utils/logger';
+import { sanitizeMessage } from '../utils/sanitize';
 import {
   getConversations,
   getMessages,
@@ -62,7 +64,7 @@ export const ChatProvider = ({ children }) => {
       const data = await getConversations(user.id, user.role);
       setConversations(data);
     } catch (error) {
-      console.error('Erro ao carregar conversas:', error.message);
+      logger.error('Erro ao carregar conversas:', error.message);
     }
   }, [user]);
 
@@ -71,20 +73,22 @@ export const ChatProvider = ({ children }) => {
       const data = await getMessages(conversationId);
       setMessagesByConversation(prev => ({ ...prev, [conversationId]: data }));
     } catch (error) {
-      console.error('Erro ao carregar mensagens:', error.message);
+      logger.error('Erro ao carregar mensagens:', error.message);
     }
   }, []);
 
   const sendMessage = useCallback(async (conversationId, text) => {
     if (!user || !text.trim()) return;
     try {
-      const message = await sendMessageService(conversationId, user.id, text.trim());
+      const safeText = sanitizeMessage(text.trim());
+      if (!safeText) return;
+      const message = await sendMessageService(conversationId, user.id, safeText);
       setMessagesByConversation(prev => ({
         ...prev,
         [conversationId]: [...(prev[conversationId] || []), message],
       }));
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error.message);
+      logger.error('Erro ao enviar mensagem:', error.message);
     }
   }, [user]);
 

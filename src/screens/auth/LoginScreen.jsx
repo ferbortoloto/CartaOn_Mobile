@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { mapAuthError } from '../../utils/authErrors';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -25,7 +26,7 @@ export default function LoginScreen({ navigation }) {
     try {
       await login(email.trim(), password);
     } catch (err) {
-      Alert.alert('Erro ao entrar', err.message || 'Verifique suas credenciais.');
+      Alert.alert('Erro ao entrar', mapAuthError(err));
     } finally {
       setLoading(false);
     }
