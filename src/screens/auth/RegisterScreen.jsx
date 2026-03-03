@@ -30,6 +30,18 @@ function formatCPF(value) {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+function isValidCPF(value) {
+  const d = value.replace(/\D/g, '');
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  const calc = (len) => {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(d[i]) * (len + 1 - i);
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
+}
+
 function formatDate(value) {
   const digits = value.replace(/\D/g, '').slice(0, 8);
   if (digits.length <= 2) return digits;
@@ -160,16 +172,36 @@ export default function RegisterScreen({ navigation }) {
   // ── Validation ──
   const validateAll = () => {
     const errs = {};
-    if (!name.trim())
-      errs.name = 'Informe seu nome completo.';
+    const nameParts = name.trim().split(/\s+/).filter(w => w.length > 0);
+    if (nameParts.length < 2)
+      errs.name = 'Informe nome e sobrenome.';
     if (!email.trim() || !email.includes('@'))
       errs.email = 'Informe um e-mail válido.';
     if (!phone.trim() || phone.replace(/\D/g, '').length < 10)
       errs.phone = 'Informe um telefone válido.';
-    if (!cpf.trim() || cpf.replace(/\D/g, '').length !== 11)
-      errs.cpf = 'CPF inválido — informe os 11 dígitos.';
-    if (!birthdate.trim() || birthdate.replace(/\D/g, '').length !== 8)
+    if (!isValidCPF(cpf))
+      errs.cpf = 'CPF inválido.';
+    if (!birthdate.trim() || birthdate.replace(/\D/g, '').length !== 8) {
       errs.birthdate = 'Use o formato DD/MM/AAAA.';
+    } else {
+      const [dd, mm, yyyy] = birthdate.split('/').map(Number);
+      const dateObj = new Date(yyyy, mm - 1, dd);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (
+        dateObj.getFullYear() !== yyyy ||
+        dateObj.getMonth() !== mm - 1 ||
+        dateObj.getDate() !== dd
+      ) {
+        errs.birthdate = 'Data inválida.';
+      } else if (dateObj >= today) {
+        errs.birthdate = 'A data não pode ser hoje ou no futuro.';
+      } else {
+        const minBirthdate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        if (dateObj > minBirthdate)
+          errs.birthdate = 'É necessário ter pelo menos 18 anos.';
+      }
+    }
     if (!password || password.length < 8)
       errs.password = 'Mínimo 8 caracteres.';
     else if (!/[A-Z]/.test(password))
@@ -338,34 +370,29 @@ export default function RegisterScreen({ navigation }) {
                 />
               </Field>
 
-              <View style={styles.row}>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Field label="Telefone" icon="call-outline" error={errors.phone}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="(11) 99999-9999"
-                      placeholderTextColor="#9CA3AF"
-                      value={phone}
-                      onChangeText={(v) => { setPhone(formatPhone(v)); clearErr('phone'); }}
-                      onBlur={() => blurField('phone')}
-                      keyboardType="phone-pad"
-                    />
-                  </Field>
-                </View>
-                <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Field label="Data de nasc." icon="calendar-outline" error={errors.birthdate}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="DD/MM/AAAA"
-                      placeholderTextColor="#9CA3AF"
-                      value={birthdate}
-                      onChangeText={(v) => { setBirthdate(formatDate(v)); clearErr('birthdate'); }}
-                      onBlur={() => blurField('birthdate')}
-                      keyboardType="numeric"
-                    />
-                  </Field>
-                </View>
-              </View>
+              <Field label="Telefone" icon="call-outline" error={errors.phone}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="(11) 99999-9999"
+                  placeholderTextColor="#9CA3AF"
+                  value={phone}
+                  onChangeText={(v) => { setPhone(formatPhone(v)); clearErr('phone'); }}
+                  onBlur={() => blurField('phone')}
+                  keyboardType="phone-pad"
+                />
+              </Field>
+
+              <Field label="Data de nascimento" icon="calendar-outline" error={errors.birthdate}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor="#9CA3AF"
+                  value={birthdate}
+                  onChangeText={(v) => { setBirthdate(formatDate(v)); clearErr('birthdate'); }}
+                  onBlur={() => blurField('birthdate')}
+                  keyboardType="numeric"
+                />
+              </Field>
 
               <Field label="CPF" icon="id-card-outline" error={errors.cpf}>
                 <TextInput
@@ -657,11 +684,10 @@ const styles = StyleSheet.create({
     fontSize: 12, color: '#EF4444', marginTop: 4, marginLeft: 2,
   },
   inputIcon: { marginRight: 8 },
-  input: { flex: 1, height: 48, fontSize: 15, color: '#111827' },
-  inputSm: { flex: 1, height: 48, fontSize: 12, color: '#111827' },
+  input: { flex: 1, height: 48, fontSize: 15, color: '#111827', outlineWidth: 0 },
+  inputSm: { flex: 1, height: 48, fontSize: 12, color: '#111827', outlineWidth: 0 },
   eyeBtn: { padding: 4 },
   currencyPrefix: { fontSize: 15, color: '#6B7280', marginRight: 4, fontWeight: '600' },
-  row: { flexDirection: 'row' },
 
   // Info box
   infoBox: {
