@@ -79,7 +79,7 @@ export function SecurityProvider({ children }) {
             <View style={styles.lockCircle}>
               <Ionicons name="lock-closed" size={36} color="#1D4ED8" />
             </View>
-            <Text style={styles.appName}>CartaOn</Text>
+            <Text style={styles.appName}>Abily</Text>
             <Text style={styles.lockText}>Sua sessão está protegida</Text>
           </View>
         )}

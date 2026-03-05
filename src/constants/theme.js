@@ -1,4 +1,4 @@
-// CartaOn — Design System (tema "Estrada")
+// Abily — Design System (tema "Estrada")
 // Paleta automotiva: azul marinho profissional
 
 export const COLORS = {

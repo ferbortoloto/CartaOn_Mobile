@@ -279,7 +279,7 @@ export default function RegisterScreen({ navigation }) {
                 <View style={styles.logoCircle}>
                   <Ionicons name="car-sport" size={32} color="#1D4ED8" />
                 </View>
-                <Text style={styles.brandName}>CartaOn</Text>
+                <Text style={styles.brandName}>Abily</Text>
                 <Text style={styles.brandSub}>Criar nova conta</Text>
               </View>
             </View>
@@ -576,7 +576,7 @@ export default function RegisterScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.footer}>CartaOn © {new Date().getFullYear()}</Text>
+            <Text style={styles.footer}>Abily © {new Date().getFullYear()}</Text>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

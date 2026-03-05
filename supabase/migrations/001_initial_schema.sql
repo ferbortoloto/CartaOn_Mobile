@@ -1,4 +1,4 @@
--- CartaOnMOBILE — Schema inicial
+-- Abily — Schema inicial
 -- Executado em: 2026-02-26
 -- Para recriar: cole no Editor SQL do Supabase
 

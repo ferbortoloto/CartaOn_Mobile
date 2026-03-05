@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
 };
 
 export default function ContactList() {
-  const { contacts, addContact, updateContact, deleteContact } = useSchedule();
+  const { contacts, updateContact, deleteContact } = useSchedule();
   const [search, setSearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
@@ -28,22 +28,13 @@ export default function ContactList() {
   );
 
   const handleSave = (contactData) => {
-    if (editingContact) {
-      updateContact({ ...editingContact, ...contactData });
-    } else {
-      addContact(contactData);
-    }
+    updateContact({ ...editingContact, ...contactData });
     setModalVisible(false);
     setEditingContact(null);
   };
 
   const handleEdit = (contact) => {
     setEditingContact(contact);
-    setModalVisible(true);
-  };
-
-  const handleAdd = () => {
-    setEditingContact(null);
     setModalVisible(true);
   };
 
@@ -105,7 +96,7 @@ export default function ContactList() {
 
   return (
     <View style={styles.container}>
-      {/* Search + Add */}
+      {/* Search */}
       <View style={styles.topBar}>
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={16} color="#9CA3AF" />
@@ -122,22 +113,18 @@ export default function ContactList() {
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
-          <Ionicons name="add" size={22} color="#FFF" />
-        </TouchableOpacity>
       </View>
 
       {filtered.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="people-outline" size={48} color="#D1D5DB" />
           <Text style={styles.emptyTitle}>
-            {search ? 'Nenhum aluno encontrado' : 'Nenhum aluno cadastrado'}
+            {search ? 'Nenhum aluno encontrado' : 'Nenhum aluno ainda'}
           </Text>
           {!search && (
-            <TouchableOpacity style={styles.emptyAddBtn} onPress={handleAdd}>
-              <Ionicons name="add-circle-outline" size={18} color={PRIMARY} />
-              <Text style={styles.emptyAddText}>Adicionar primeiro aluno</Text>
-            </TouchableOpacity>
+            <Text style={styles.emptySubtitle}>
+              Os alunos aparecem aqui automaticamente quando você aceitar uma aula ou plano.
+            </Text>
           )}
         </View>
       ) : (
@@ -163,19 +150,13 @@ export default function ContactList() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  topBar: { padding: 12 },
   searchBox: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#F9FAFB', borderRadius: 12,
     borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 12, paddingVertical: 8,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111827' },
-  addBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: PRIMARY,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
-  },
-
   list: { padding: 14, paddingTop: 6, paddingBottom: 32 },
   contactCard: {
     flexDirection: 'row', alignItems: 'flex-start',
@@ -196,8 +177,7 @@ const styles = StyleSheet.create({
   editBtn: { padding: 8, backgroundColor: '#F5F0FF', borderRadius: 10 },
   deleteBtn: { padding: 8, backgroundColor: '#FEF2F2', borderRadius: 10 },
 
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10, paddingHorizontal: 32 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#374151' },
-  emptyAddBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
-  emptyAddText: { fontSize: 14, color: PRIMARY, fontWeight: '600' },
+  emptySubtitle: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
 });

@@ -47,7 +47,7 @@ const NOTIF_STYLE = {
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
-  const { requests, addEvent, addContact, acceptRequest, rejectRequest, checkTravelConflict } = useSchedule();
+  const { requests, addEvent, acceptRequest, rejectRequest, checkTravelConflict } = useSchedule();
   const { getInstructorPlans, togglePlan, addPlan } = usePlans();
   const { activeSession, elapsedSeconds, isCompleted, generateCode, startSession, endSession } = useSession();
 
@@ -281,7 +281,7 @@ export default function DashboardScreen({ navigation }) {
               <Avatar uri={user?.avatar_url} name={user?.name} size={40} />
               <View>
                 <Text style={styles.headerGreeting}>Bem-vindo</Text>
-                <Text style={styles.headerName}>{user?.name || 'Instrutor CartaOn'}</Text>
+                <Text style={styles.headerName}>{user?.name || 'Instrutor Abily'}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.bellBtn} onPress={() => setShowNotifications(true)} activeOpacity={0.8}>

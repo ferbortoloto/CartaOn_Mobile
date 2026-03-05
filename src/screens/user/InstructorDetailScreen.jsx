@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, Platform, TextInput,
+  ScrollView, Alert, Platform, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ import Avatar from '../../components/shared/Avatar';
 import { usePlans } from '../../context/PlansContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useSchedule } from '../../context/ScheduleContext';
-import { getReviews } from '../../services/instructors.service';
+import { getReviews, createReview } from '../../services/instructors.service';
 import { logger } from '../../utils/logger';
 import { MeetingPointType } from '../../data/scheduleData';
 import { geocodeAddress } from '../../utils/geocoding';
@@ -43,7 +43,7 @@ export default function InstructorDetailScreen({ route, navigation }) {
   const { instructor } = route.params;
   const { getActivePlans } = usePlans();
   const { user } = useAuth();
-  const { addRequest } = useSchedule();
+  const { addRequest, events } = useSchedule();
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [carChoice, setCarChoice] = useState(
@@ -56,12 +56,48 @@ export default function InstructorDetailScreen({ route, navigation }) {
   const [customCoordinates, setCustomCoordinates] = useState(null);
   const [geocoding, setGeocoding] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   useEffect(() => {
     getReviews(instructor.id)
       .then(data => setReviews(data))
       .catch(e => logger.error('Erro ao carregar avaliações:', e.message));
   }, [instructor.id]);
+
+  const hasCompletedClass = events.some(
+    e => (e.type === 'class' || e.type === 'CLASS') &&
+         e.instructorId === instructor.id &&
+         e.status === 'completed'
+  );
+  const alreadyReviewed = reviews.some(r => r.student_id === user?.id);
+  const canReview = hasCompletedClass && !alreadyReviewed;
+
+  const handleSubmitReview = async () => {
+    setReviewSubmitting(true);
+    try {
+      await createReview({
+        instructorId: instructor.id,
+        studentId: user.id,
+        eventId: null,
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+      });
+      const updated = await getReviews(instructor.id);
+      setReviews(updated);
+      setShowReviewModal(false);
+      setReviewComment('');
+      setReviewRating(5);
+      Alert.alert('Avaliação enviada!', 'Obrigado pelo seu feedback.');
+    } catch (e) {
+      logger.error('Erro ao enviar avaliação:', e.message);
+      Alert.alert('Erro', 'Não foi possível enviar sua avaliação. Tente novamente.');
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   const plans = getActivePlans(instructor.id);
 
@@ -446,9 +482,17 @@ export default function InstructorDetailScreen({ route, navigation }) {
         </View>
 
         {/* Reviews */}
-        {reviews.length > 0 && (
+        {(reviews.length > 0 || canReview) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Avaliações</Text>
+            <View style={styles.reviewsSectionHeader}>
+              <Text style={styles.sectionTitle}>Avaliações</Text>
+              {canReview && (
+                <TouchableOpacity style={styles.reviewBtn} onPress={() => setShowReviewModal(true)}>
+                  <Ionicons name="star-outline" size={14} color="#FFF" />
+                  <Text style={styles.reviewBtnText}>Avaliar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {reviews.map(review => {
               const authorName = review.profiles?.name || 'Aluno';
               const dateStr = new Date(review.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
@@ -475,6 +519,66 @@ export default function InstructorDetailScreen({ route, navigation }) {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modal de avaliação */}
+      <Modal
+        visible={showReviewModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Avaliar instrutor</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(false)}>
+                <Ionicons name="close" size={22} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalInstructorName}>{instructor.name}</Text>
+
+            {/* Star selector */}
+            <View style={styles.starSelector}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <TouchableOpacity key={star} onPress={() => setReviewRating(star)} activeOpacity={0.7}>
+                  <Ionicons
+                    name={star <= reviewRating ? 'star' : 'star-outline'}
+                    size={36}
+                    color="#EAB308"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.ratingLabel}>
+              {['', 'Ruim', 'Regular', 'Bom', 'Muito bom', 'Excelente'][reviewRating]}
+            </Text>
+
+            {/* Comment */}
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Deixe um comentário (opcional)"
+              placeholderTextColor="#9CA3AF"
+              value={reviewComment}
+              onChangeText={setReviewComment}
+              multiline
+              numberOfLines={3}
+              maxLength={300}
+            />
+
+            <TouchableOpacity
+              style={[styles.submitBtn, reviewSubmitting && { opacity: 0.6 }]}
+              onPress={handleSubmitReview}
+              disabled={reviewSubmitting}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="checkmark-circle-outline" size={18} color="#FFF" />
+              <Text style={styles.submitBtnText}>
+                {reviewSubmitting ? 'Enviando...' : 'Enviar avaliação'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Schedule CTA */}
       <View style={styles.footer}>
@@ -621,6 +725,39 @@ const styles = StyleSheet.create({
     marginTop: 6, paddingHorizontal: 4,
   },
   geocodeSuccessText: { fontSize: 12, fontWeight: '600', color: '#16A34A' },
+
+  reviewsSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  reviewBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: PRIMARY, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  reviewBtnText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
+
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBox: {
+    backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: 40,
+  },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  modalInstructorName: { fontSize: 13, color: '#6B7280', marginBottom: 20 },
+  starSelector: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 8 },
+  ratingLabel: { textAlign: 'center', fontSize: 14, fontWeight: '700', color: '#374151', marginBottom: 20, height: 20 },
+  commentInput: {
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
+    padding: 12, fontSize: 14, color: '#111827',
+    minHeight: 80, textAlignVertical: 'top', marginBottom: 16,
+  },
+  submitBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14,
+    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 6,
+  },
+  submitBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
 
   reviewCard: {
     borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 12, marginTop: 12,

@@ -7,7 +7,7 @@ export async function geocodeAddress(address) {
   const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`;
 
   const response = await fetch(url, {
-    headers: { 'Accept-Language': 'pt-BR', 'User-Agent': 'CartaOnMOBILE/1.0' },
+    headers: { 'Accept-Language': 'pt-BR', 'User-Agent': 'AbilyMOBILE/1.0' },
   });
 
   if (!response.ok) throw new Error('Erro ao consultar geocoding');

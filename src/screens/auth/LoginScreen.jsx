@@ -71,7 +71,7 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.logoCircle}>
                 <Ionicons name="car-sport" size={38} color="#1D4ED8" />
               </View>
-              <Text style={styles.brandName}>CartaOn</Text>
+              <Text style={styles.brandName}>Abily</Text>
               <Text style={styles.brandSub}>Sua auto-escola no bolso</Text>
             </View>
 
@@ -168,7 +168,7 @@ export default function LoginScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
 
-            <Text style={styles.footer}>CartaOn © {new Date().getFullYear()}</Text>
+            <Text style={styles.footer}>Abily © {new Date().getFullYear()}</Text>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

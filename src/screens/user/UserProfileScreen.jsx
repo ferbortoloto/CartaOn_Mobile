@@ -22,7 +22,7 @@ export default function UserProfileScreen() {
   const { events } = useSchedule();
   const [editing, setEditing] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [name, setName] = useState(user?.name || 'Aluno CartaOn');
+  const [name, setName] = useState(user?.name || 'Aluno Abily');
   const [email, setEmail] = useState(user?.email || 'user@gmail.com');
   const [phone, setPhone] = useState(user?.phone || '(11) 98765-4321');
   const [goal, setGoal] = useState(user?.goal || 'Categoria B');
@@ -101,7 +101,7 @@ export default function UserProfileScreen() {
           )}
           <View style={styles.roleBadge}>
             <Ionicons name="school-outline" size={12} color={PRIMARY} />
-            <Text style={styles.roleText}>Aluno CartaOn</Text>
+            <Text style={styles.roleText}>Aluno Abily</Text>
           </View>
         </View>
 

@@ -230,7 +230,7 @@ export default function ChatScreen() {
       {!activeConvId && (
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Mensagens</Text>
-          <Text style={styles.headerBrand}>CartaOn</Text>
+          <Text style={styles.headerBrand}>Abily</Text>
         </View>
       )}
 

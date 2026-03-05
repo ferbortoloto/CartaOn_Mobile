@@ -143,7 +143,7 @@ export default function UserDashboardScreen({ navigation }) {
             <Avatar uri={user?.avatar} name={user?.name} size={38} />
             <View style={styles.headerInfo}>
               <Text style={styles.headerGreeting}>Bem-vindo!</Text>
-              <Text style={styles.headerName}>{user?.name || 'Aluno CartaOn'}</Text>
+              <Text style={styles.headerName}>{user?.name || 'Aluno Abily'}</Text>
             </View>
           </View>
           <View style={styles.countPill}>

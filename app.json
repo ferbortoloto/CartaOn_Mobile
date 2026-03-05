@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CartaOn",
-    "slug": "cartaon-mobile",
+    "name": "Abily",
+    "slug": "abily-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -10,13 +10,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cartaon.mobile"
+      "bundleIdentifier": "com.abily.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#820AD1"
       },
-      "package": "com.cartaon.mobile"
+      "package": "com.abily.mobile"
     },
     "web": {},
     "plugins": [
