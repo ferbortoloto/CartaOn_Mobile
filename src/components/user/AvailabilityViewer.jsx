@@ -1,31 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getInstructorAvailability } from '../../services/instructors.service';
+import { logger } from '../../utils/logger';
 
 const PRIMARY = '#1D4ED8';
-
-const ALL_SLOTS = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-  '11:00', '11:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-];
 
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-function getAvailableSlots(instructorId, dayOfWeek) {
-  // Generate deterministic availability based on instructor id and day
-  const seed = parseInt(instructorId, 10) || 1;
-  // Weekdays have more slots than weekends
-  if (dayOfWeek === 0) return []; // Sunday - no availability
-  if (dayOfWeek === 6) {
-    // Saturday: limited slots
-    return seed % 2 === 0 ? ['09:00', '09:30', '10:00', '10:30'] : ['08:00', '08:30', '09:00'];
-  }
-  // Weekdays: morning and afternoon slots, varying by instructor
-  const morning = ALL_SLOTS.slice(0, 6 + (seed % 3));
-  const afternoon = ALL_SLOTS.slice(6, 12 + (seed % 3));
-  return [...morning, ...afternoon].filter((_, i) => (i + seed + dayOfWeek) % 3 !== 0);
+// Converte dia da semana JS (0=Dom, 1=Seg ... 6=Sáb) para o formato do banco (1=Seg ... 7=Dom)
+function jsDayToDb(jsDay) {
+  if (jsDay === 0) return 7; // Domingo
+  return jsDay;              // 1-6 = Seg-Sáb
 }
 
 export default function AvailabilityViewer({ instructorId, onSlotsSelected }) {
@@ -40,12 +27,30 @@ export default function AvailabilityViewer({ instructorId, onSlotsSelected }) {
 
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [availability, setAvailability] = useState({}); // { [dbDay]: string[] }
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!instructorId) return;
+    setLoading(true);
+    getInstructorAvailability(instructorId)
+      .then(data => setAvailability(data))
+      .catch(e => {
+        logger.error('Erro ao carregar disponibilidade do instrutor:', e.message);
+        setAvailability({});
+      })
+      .finally(() => setLoading(false));
+  }, [instructorId]);
+
+  const getAvailableSlots = (date) => {
+    const dbDay = jsDayToDb(date.getDay());
+    return availability[dbDay] || [];
+  };
 
   const selectedDate = days[selectedDayIndex];
-  const dayOfWeek = selectedDate.getDay();
   const availableSlots = useMemo(
-    () => getAvailableSlots(instructorId, dayOfWeek),
-    [instructorId, dayOfWeek],
+    () => getAvailableSlots(selectedDate),
+    [selectedDate, availability],
   );
 
   const toggleSlot = (slot) => {
@@ -62,6 +67,15 @@ export default function AvailabilityViewer({ instructorId, onSlotsSelected }) {
     onSlotsSelected?.([], days[index]);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={PRIMARY} size="small" />
+        <Text style={styles.loadingText}>Carregando horários...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Day picker */}
@@ -74,8 +88,7 @@ export default function AvailabilityViewer({ instructorId, onSlotsSelected }) {
         {days.map((day, index) => {
           const isSelected = selectedDayIndex === index;
           const isToday = index === 0;
-          const dow = day.getDay();
-          const slots = getAvailableSlots(instructorId, dow);
+          const slots = getAvailableSlots(day);
           const hasSlots = slots.length > 0;
           return (
             <TouchableOpacity
@@ -85,7 +98,7 @@ export default function AvailabilityViewer({ instructorId, onSlotsSelected }) {
               activeOpacity={hasSlots ? 0.75 : 1}
             >
               <Text style={[styles.dayPillWeekday, isSelected && styles.dayPillTextActive, !hasSlots && styles.dayPillTextUnavailable]}>
-                {isToday ? 'Hoje' : DAY_NAMES[dow]}
+                {isToday ? 'Hoje' : DAY_NAMES[day.getDay()]}
               </Text>
               <Text style={[styles.dayPillDate, isSelected && styles.dayPillTextActive, !hasSlots && styles.dayPillTextUnavailable]}>
                 {day.getDate()}
@@ -140,6 +153,8 @@ export default function AvailabilityViewer({ instructorId, onSlotsSelected }) {
 
 const styles = StyleSheet.create({
   container: { },
+  loadingContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 24, gap: 8 },
+  loadingText: { fontSize: 13, color: '#9CA3AF' },
   dayScroll: { flexGrow: 0 },
   dayScrollContent: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   dayPill: {

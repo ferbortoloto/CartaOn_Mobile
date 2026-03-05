@@ -118,9 +118,9 @@ export async function saveAvailability(instructorId, availability) {
 export async function getRequestsByInstructor(instructorId) {
   const { data, error } = await supabase
     .from('class_requests')
-    .select('*, profiles!student_id(name, avatar_url, address, coordinates)')
+    .select('*, profiles!student_id(name, avatar_url, phone, address, coordinates, rating)')
     .eq('instructor_id', instructorId)
-    .eq('status', 'pending')
+    .in('status', ['pending', 'accepted'])
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;

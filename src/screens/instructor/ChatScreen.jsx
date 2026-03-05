@@ -15,15 +15,20 @@ const PRIMARY = '#1D4ED8';
 // ─── Conversation List ────────────────────────────────────────────────────────
 function ConversationList({ onSelectConversation }) {
   const { user } = useAuth();
-  const { conversations, getUnreadCount } = useChat();
+  const { conversations, messagesByConversation, getUnreadCount } = useChat();
   const [search, setSearch] = useState('');
 
-  const getPartner = (conv) =>
-    user?.role === 'instructor'
-      ? { name: conv.studentName, avatar: conv.studentAvatar, role: 'Aluno' }
-      : { name: conv.instructorName, avatar: conv.instructorAvatar, role: 'Instrutor' };
+  const getPartner = (conv) => ({
+    name: conv.other?.name || 'Usuário',
+    avatar: conv.other?.avatar_url || null,
+    role: user?.role === 'instructor' ? 'Aluno' : 'Instrutor',
+  });
 
-  const getLastMsg = (conv) => conv.messages[conv.messages.length - 1] || null;
+  const getLastMsg = (conv) => {
+    const msgs = messagesByConversation[conv.id];
+    if (!msgs || msgs.length === 0) return null;
+    return msgs[msgs.length - 1];
+  };
 
   const filtered = conversations.filter(c => {
     const p = getPartner(c);
@@ -82,13 +87,13 @@ function ConversationList({ onSelectConversation }) {
                       {partner.name}
                     </Text>
                     {lastMsg && (
-                      <Text style={styles.convTime}>{formatMessageTime(lastMsg.timestamp)}</Text>
+                      <Text style={styles.convTime}>{formatMessageTime(lastMsg.created_at)}</Text>
                     )}
                   </View>
                   <View style={styles.convInfoBottom}>
                     <Text style={[styles.convLastMsg, unread > 0 && styles.convLastMsgBold]} numberOfLines={1}>
                       {lastMsg
-                        ? (lastMsg.senderId === user?.id ? 'Você: ' : '') + lastMsg.text
+                        ? (lastMsg.sender_id === user?.id ? 'Você: ' : '') + lastMsg.text
                         : 'Sem mensagens'}
                     </Text>
                     {unread > 0 && <View style={styles.unreadDot} />}
@@ -108,25 +113,28 @@ function ConversationList({ onSelectConversation }) {
 // ─── Chat Conversation ────────────────────────────────────────────────────────
 function ChatConversation({ conversationId, onBack }) {
   const { user } = useAuth();
-  const { conversations, sendMessage, markConversationAsRead } = useChat();
+  const { conversations, messagesByConversation, sendMessage, markConversationAsRead } = useChat();
   const [message, setMessage] = useState('');
   const flatRef = useRef(null);
 
   const conv = conversations.find(c => c.id === conversationId);
+  const messages = messagesByConversation[conversationId] || [];
 
   useEffect(() => {
     if (conversationId) markConversationAsRead(conversationId);
   }, [conversationId]);
 
   useEffect(() => {
-    if (conv?.messages?.length) {
+    if (messages.length) {
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     }
-  }, [conv?.messages?.length]);
+  }, [messages.length]);
 
-  const partner = user?.role === 'instructor'
-    ? { name: conv?.studentName, avatar: conv?.studentAvatar, role: 'Aluno' }
-    : { name: conv?.instructorName, avatar: conv?.instructorAvatar, role: 'Instrutor' };
+  const partner = {
+    name: conv?.other?.name || 'Usuário',
+    avatar: conv?.other?.avatar_url || null,
+    role: user?.role === 'instructor' ? 'Aluno' : 'Instrutor',
+  };
 
   const handleSend = () => {
     if (!message.trim()) return;
@@ -134,20 +142,18 @@ function ChatConversation({ conversationId, onBack }) {
     setMessage('');
   };
 
-  const messages = conv?.messages || [];
-
   const renderItem = ({ item, index }) => {
-    const isOwn = item.senderId === user?.id;
+    const isOwn = item.sender_id === user?.id;
     const prev = messages[index - 1];
     const showSeparator =
       index === 0 ||
-      new Date(item.timestamp) - new Date(prev?.timestamp) > 5 * 60 * 1000;
+      new Date(item.created_at) - new Date(prev?.created_at) > 5 * 60 * 1000;
 
     return (
       <>
         {showSeparator && (
           <View style={styles.timeSeparator}>
-            <Text style={styles.timeSeparatorText}>{formatTimeSeparator(item.timestamp)}</Text>
+            <Text style={styles.timeSeparatorText}>{formatTimeSeparator(item.created_at)}</Text>
           </View>
         )}
         <View style={[styles.msgRow, isOwn ? styles.msgRowOwn : styles.msgRowOther]}>

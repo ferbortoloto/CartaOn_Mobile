@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
 } from 'react-native';
@@ -6,26 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { useSchedule } from '../../context/ScheduleContext';
+import { getReviews } from '../../services/instructors.service';
+import { logger } from '../../utils/logger';
 
 const PRIMARY = '#1D4ED8';
-
-const stats = [
-  { title: 'Aulas esta Semana', value: '24', change: '+12%', icon: 'calendar-outline', color: '#2563EB', bg: '#EFF6FF' },
-  { title: 'Alunos Ativos', value: '18', change: '+3', icon: 'people-outline', color: '#16A34A', bg: '#F0FDF4' },
-  { title: 'Avaliação Média', value: '4.9', change: '+0.1', icon: 'star-outline', color: '#CA8A04', bg: '#FEFCE8' },
-  { title: 'Faturamento', value: 'R$ 2.040', change: '+18%', icon: 'cash-outline', color: PRIMARY, bg: '#EFF6FF' },
-];
-
-const recentClasses = [
-  { id: '1', studentName: 'Ana Costa', date: 'Hoje, 14:00', type: 'Aula Prática', status: 'completed', duration: '1h' },
-  { id: '2', studentName: 'Pedro Santos', date: 'Hoje, 16:00', type: 'Aula Teórica', status: 'in-progress', duration: '1h' },
-  { id: '3', studentName: 'Maria Oliveira', date: 'Amanhã, 09:00', type: 'Aula Prática', status: 'scheduled', duration: '1h' },
-];
-
-const upcomingTests = [
-  { studentName: 'João Silva', testDate: '25/03/2026', testType: 'Prático', preparation: 85 },
-  { studentName: 'Lucas Mendes', testDate: '27/03/2026', testType: 'Teórico', preparation: 92 },
-];
 
 const statusConfig = {
   completed: { label: 'Concluída', color: '#16A34A', dot: '#22C55E' },
@@ -35,6 +20,78 @@ const statusConfig = {
 
 export default function StatsScreen() {
   const { user } = useAuth();
+  const { events } = useSchedule();
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    getReviews(user.id)
+      .then(data => setReviews(data))
+      .catch(e => logger.error('Erro ao carregar avaliações:', e.message));
+  }, [user?.id]);
+
+  const classEvents = useMemo(() =>
+    events.filter(e => e.type === 'class' || e.type === 'CLASS'),
+  [events]);
+
+  const weekStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const classesThisWeek = useMemo(() =>
+    classEvents.filter(e => new Date(e.startDateTime) >= weekStart).length,
+  [classEvents, weekStart]);
+
+  const activeStudents = useMemo(() => {
+    const ids = new Set(classEvents.map(e => e.contactId).filter(Boolean));
+    return ids.size;
+  }, [classEvents]);
+
+  const avgRating = useMemo(() => {
+    if (reviews.length === 0) return null;
+    const sum = reviews.reduce((s, r) => s + (r.rating || 0), 0);
+    return (sum / reviews.length).toFixed(1);
+  }, [reviews]);
+
+  const estimatedRevenue = useMemo(() => {
+    const pricePerHour = user?.price_per_hour || 0;
+    const duration = (user?.class_duration || 60) / 60;
+    return Math.round(classEvents.filter(e => e.status === 'completed').length * pricePerHour * duration);
+  }, [classEvents, user]);
+
+  const stats = [
+    { title: 'Aulas esta Semana', value: String(classesThisWeek), icon: 'calendar-outline', color: '#2563EB', bg: '#EFF6FF' },
+    { title: 'Alunos Ativos', value: String(activeStudents), icon: 'people-outline', color: '#16A34A', bg: '#F0FDF4' },
+    { title: 'Avaliação Média', value: avgRating ?? '—', icon: 'star-outline', color: '#CA8A04', bg: '#FEFCE8' },
+    { title: 'Faturamento', value: `R$ ${estimatedRevenue}`, icon: 'cash-outline', color: PRIMARY, bg: '#EFF6FF' },
+  ];
+
+  const recentClasses = useMemo(() =>
+    [...classEvents]
+      .sort((a, b) => new Date(b.startDateTime) - new Date(a.startDateTime))
+      .slice(0, 5)
+      .map(e => {
+        const d = new Date(e.startDateTime);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const isToday = d.toDateString() === today.toDateString();
+        const isTomorrow = d.toDateString() === tomorrow.toDateString();
+        const dateLabel = isToday ? 'Hoje' : isTomorrow ? 'Amanhã' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        const timeLabel = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return {
+          id: e.id,
+          studentName: e.title.replace(/^Aula de .+ - /, '') || 'Aluno',
+          date: `${dateLabel}, ${timeLabel}`,
+          type: e.type === 'class' || e.type === 'CLASS' ? 'Aula Prática' : e.type,
+          status: e.status === 'scheduled' ? 'scheduled' : e.status === 'completed' ? 'completed' : 'scheduled',
+          duration: `${user?.class_duration || 60} min`,
+        };
+      }),
+  [classEvents, user]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -58,9 +115,6 @@ export default function StatsScreen() {
                 <View style={[styles.kpiIconBox, { backgroundColor: stat.bg }]}>
                   <Ionicons name={stat.icon} size={22} color={stat.color} />
                 </View>
-                <View style={styles.kpiBadge}>
-                  <Text style={styles.kpiBadgeText}>{stat.change}</Text>
-                </View>
               </View>
               <Text style={styles.kpiValue}>{stat.value}</Text>
               <Text style={styles.kpiTitle}>{stat.title}</Text>
@@ -72,12 +126,11 @@ export default function StatsScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aulas Recentes</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>Ver todas</Text>
-            </TouchableOpacity>
           </View>
-          {recentClasses.map(item => {
-            const cfg = statusConfig[item.status];
+          {recentClasses.length === 0 ? (
+            <Text style={styles.emptyText}>Nenhuma aula registrada ainda.</Text>
+          ) : recentClasses.map(item => {
+            const cfg = statusConfig[item.status] || statusConfig.scheduled;
             return (
               <View key={item.id} style={styles.classRow}>
                 <View style={[styles.classDot, { backgroundColor: cfg.dot }]} />
@@ -94,43 +147,16 @@ export default function StatsScreen() {
           })}
         </View>
 
-        {/* Próximas Provas */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>Próximas Provas</Text>
-          {upcomingTests.map((test, i) => (
-            <View key={i} style={styles.testCard}>
-              <View style={styles.testTop}>
-                <View>
-                  <Text style={styles.testName}>{test.studentName}</Text>
-                  <Text style={styles.testType}>Prova {test.testType}</Text>
-                </View>
-                <Ionicons name="trophy-outline" size={20} color={PRIMARY} />
-              </View>
-              <View style={styles.testDateRow}>
-                <Text style={styles.testDateLabel}>Data:</Text>
-                <Text style={styles.testDateValue}>{test.testDate}</Text>
-              </View>
-              <View style={styles.prepRow}>
-                <Text style={styles.prepLabel}>Preparação: <Text style={styles.prepValue}>{test.preparation}%</Text></Text>
-              </View>
-              <View style={styles.progressBg}>
-                <View style={[styles.progressFill, { width: `${test.preparation}%` }]} />
-              </View>
-            </View>
-          ))}
-        </View>
-
         {/* Banner do mês */}
-        <LinearGradient colors={['#1E3A8A', '#1D4ED8']} style={styles.banner}>
-          <View style={styles.bannerLeft}>
-            <Text style={styles.bannerTitle}>Avaliação do Mês</Text>
-            <Text style={styles.bannerSub}>Você recebeu 5 novas avaliações! Média 4.9 ⭐</Text>
-            <TouchableOpacity style={styles.bannerBtn}>
-              <Text style={styles.bannerBtnText}>Ver Avaliações</Text>
-            </TouchableOpacity>
-          </View>
-          <Ionicons name="trophy" size={56} color="rgba(255,255,255,0.3)" />
-        </LinearGradient>
+        {reviews.length > 0 && (
+          <LinearGradient colors={['#1E3A8A', '#1D4ED8']} style={styles.banner}>
+            <View style={styles.bannerLeft}>
+              <Text style={styles.bannerTitle}>Avaliação do Mês</Text>
+              <Text style={styles.bannerSub}>Você tem {reviews.length} avaliação{reviews.length > 1 ? 'ões' : ''}. Média {avgRating} ⭐</Text>
+            </View>
+            <Ionicons name="trophy" size={56} color="rgba(255,255,255,0.3)" />
+          </LinearGradient>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -200,4 +226,5 @@ const styles = StyleSheet.create({
   bannerSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 14 },
   bannerBtn: { backgroundColor: '#FFF', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, alignSelf: 'flex-start' },
   bannerBtnText: { fontSize: 13, fontWeight: '700', color: PRIMARY },
+  emptyText: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', paddingVertical: 16 },
 });

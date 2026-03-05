@@ -1,25 +1,12 @@
 import { supabase } from '../lib/supabase';
 
 /**
- * Valida credenciais e envia OTP para 2FA.
- * Fluxo: signInWithPassword (valida senha) → signOut (descarta sessão temporária)
- *        → signInWithOtp (envia código ao e-mail).
- * O AuthContext suprime os eventos de auth durante este processo.
+ * Valida credenciais e autentica diretamente (sem 2FA/OTP).
+ * TODO: reativar 2FA antes de ir para produção.
  */
 export async function signIn(email, password) {
-  // 1. Valida senha — lança erro se inválida
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
-
-  // 2. Descarta a sessão temporária antes de disparar o OTP
-  await supabase.auth.signOut();
-
-  // 3. Envia OTP ao e-mail (usa o template "Magic Link" do Supabase)
-  const { error: otpError } = await supabase.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: false },
-  });
-  if (otpError) throw otpError;
 }
 
 /**

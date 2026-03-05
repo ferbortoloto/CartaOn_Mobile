@@ -58,7 +58,7 @@ const scheduleReducer = (state, action) => {
     case ACTIONS.ADD_REQUEST:
       return { ...state, requests: [action.payload, ...state.requests] };
     case ACTIONS.UPDATE_REQUEST:
-      return { ...state, requests: state.requests.map(r => r.id === action.payload.id ? action.payload : r) };
+      return { ...state, requests: state.requests.map(r => r.id === action.payload.id ? { ...r, ...action.payload } : r) };
     case ACTIONS.ADD_CONTACT:
       return { ...state, contacts: [...state.contacts, { ...action.payload, id: Date.now().toString() }] };
     case ACTIONS.UPDATE_CONTACT:
@@ -77,6 +77,37 @@ const scheduleReducer = (state, action) => {
       return state;
   }
 };
+
+// Formata tempo relativo (ex: "5 min atrás", "2h atrás")
+const toRelativeTime = (iso) => {
+  const diffMin = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (diffMin < 1) return 'agora';
+  if (diffMin < 60) return `${diffMin} min atrás`;
+  return `${Math.floor(diffMin / 60)}h atrás`;
+};
+
+// Converte registro de class_request do banco para formato usado no app
+const toAppRequest = (r) => ({
+  id: r.id,
+  student_id: r.student_id,
+  instructor_id: r.instructor_id,
+  studentName: r.profiles?.name || 'Aluno',
+  studentAvatar: r.profiles?.avatar_url || null,
+  location: r.meeting_point?.address || r.profiles?.address || '',
+  distance: '— km',
+  estimatedTime: '— min',
+  type: r.type || 'Aula Prática',
+  price: r.price || 0,
+  rating: r.profiles?.rating ?? null,
+  phone: r.profiles?.phone || '',
+  status: r.status,
+  requestTime: toRelativeTime(r.created_at),
+  carOption: r.car_option || 'instructor',
+  coordinates: r.profiles?.coordinates || { latitude: -23.5505, longitude: -46.6333 },
+  meetingPoint: r.meeting_point || null,
+  requestedSlots: r.requested_slots || [],
+  requestedDate: r.requested_date || null,
+});
 
 // Converte snake_case do banco para camelCase usado no app
 const toAppEvent = (e) => ({
@@ -129,14 +160,14 @@ export const ScheduleProvider = ({ children }) => {
           getRequestsByInstructor(user.id),
         ]);
         dispatch({ type: ACTIONS.SET_EVENTS, payload: events.map(toAppEvent) });
-        dispatch({ type: ACTIONS.SET_REQUESTS, payload: requests });
+        dispatch({ type: ACTIONS.SET_REQUESTS, payload: requests.map(toAppRequest) });
       } else {
         const [events, requests] = await Promise.all([
           getEventsByStudent(user.id),
           getRequestsByStudent(user.id),
         ]);
         dispatch({ type: ACTIONS.SET_EVENTS, payload: events.map(toAppEvent) });
-        dispatch({ type: ACTIONS.SET_REQUESTS, payload: requests });
+        dispatch({ type: ACTIONS.SET_REQUESTS, payload: requests.map(toAppRequest) });
       }
     } catch (error) {
       logger.error('Erro ao carregar agenda:', error.message);
@@ -182,15 +213,13 @@ export const ScheduleProvider = ({ children }) => {
   }, [user]);
 
   const acceptRequest = useCallback(async (requestId) => {
-    const updated = await updateRequestStatus(requestId, 'accepted');
-    dispatch({ type: ACTIONS.UPDATE_REQUEST, payload: updated });
-    return updated;
+    await updateRequestStatus(requestId, 'accepted');
+    dispatch({ type: ACTIONS.UPDATE_REQUEST, payload: { id: requestId, status: 'accepted' } });
   }, []);
 
   const rejectRequest = useCallback(async (requestId) => {
-    const updated = await updateRequestStatus(requestId, 'rejected');
-    dispatch({ type: ACTIONS.UPDATE_REQUEST, payload: updated });
-    return updated;
+    await updateRequestStatus(requestId, 'rejected');
+    dispatch({ type: ACTIONS.UPDATE_REQUEST, payload: { id: requestId, status: 'rejected' } });
   }, []);
 
   const getEventsForDate = useCallback((date) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Alert, Platform, TextInput,
@@ -9,7 +9,11 @@ import AvailabilityViewer from '../../components/user/AvailabilityViewer';
 import Avatar from '../../components/shared/Avatar';
 import { usePlans } from '../../context/PlansContext';
 import { useAuth } from '../../hooks/useAuth';
+import { useSchedule } from '../../context/ScheduleContext';
+import { getReviews } from '../../services/instructors.service';
+import { logger } from '../../utils/logger';
 import { MeetingPointType } from '../../data/scheduleData';
+import { geocodeAddress } from '../../utils/geocoding';
 
 const PRIMARY = '#1D4ED8';
 
@@ -19,11 +23,6 @@ const CLASS_TYPE_ICON = {
   'Misto':        'grid-outline',
 };
 
-const REVIEWS = [
-  { id: '1', author: 'Lucas M.', rating: 5, text: 'Excelente instrutora! Muito paciente e didática.', date: 'Jan 2026' },
-  { id: '2', author: 'Carla S.', rating: 5, text: 'Aprendi muito rápido. Recomendo muito!', date: 'Dez 2025' },
-  { id: '3', author: 'Marcos P.', rating: 4, text: 'Ótima profissional. Pontual e bem-humorada.', date: 'Nov 2025' },
-];
 
 function StarRow({ rating, size = 14, color = '#EAB308' }) {
   return (
@@ -44,6 +43,7 @@ export default function InstructorDetailScreen({ route, navigation }) {
   const { instructor } = route.params;
   const { getActivePlans } = usePlans();
   const { user } = useAuth();
+  const { addRequest } = useSchedule();
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [carChoice, setCarChoice] = useState(
@@ -53,6 +53,15 @@ export default function InstructorDetailScreen({ route, navigation }) {
     user?.address ? MeetingPointType.STUDENT_HOME : MeetingPointType.INSTRUCTOR_LOCATION
   );
   const [customAddress, setCustomAddress] = useState('');
+  const [customCoordinates, setCustomCoordinates] = useState(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    getReviews(instructor.id)
+      .then(data => setReviews(data))
+      .catch(e => logger.error('Erro ao carregar avaliações:', e.message));
+  }, [instructor.id]);
 
   const plans = getActivePlans(instructor.id);
 
@@ -64,7 +73,25 @@ export default function InstructorDetailScreen({ route, navigation }) {
     return customAddress || 'Local personalizado';
   };
 
-  const handleSchedule = () => {
+  const handleGeocodeCustom = async () => {
+    if (!customAddress.trim()) return;
+    setGeocoding(true);
+    try {
+      const coords = await geocodeAddress(customAddress);
+      if (coords) {
+        setCustomCoordinates({ latitude: coords.latitude, longitude: coords.longitude });
+        Alert.alert('Endereço confirmado', `Localização encontrada:\n${coords.displayName.split(',').slice(0, 3).join(',')}`, [{ text: 'OK' }]);
+      } else {
+        Alert.alert('Endereço não encontrado', 'Tente ser mais específico (ex: "Rua das Flores, 123, São Paulo").');
+      }
+    } catch {
+      Alert.alert('Erro', 'Não foi possível buscar o endereço. Verifique sua conexão.');
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  const handleSchedule = async () => {
     if (selectedSlots.length === 0) {
       if (Platform.OS === 'web') {
         window.alert('Por favor, selecione pelo menos um horário disponível.');
@@ -81,19 +108,41 @@ export default function InstructorDetailScreen({ route, navigation }) {
       }
       return;
     }
-    const dateStr = selectedDate
-      ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
-      : '';
-    const carLabel = carChoice === 'student'
-      ? 'Seu carro'
-      : `Carro do instrutor${instructor.carModel ? ` (${instructor.carModel})` : ''}`;
-    const meetingLabel = getMeetingPointLabel();
-    const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\nVeículo: ${carLabel}\nLocal de encontro: ${meetingLabel}\n\nAguarde a confirmação do instrutor.`;
-    if (Platform.OS === 'web') {
-      window.alert(`Aula Solicitada!\n\n${msg}`);
-      navigation.goBack();
-    } else {
-      Alert.alert('Aula Solicitada!', msg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
+
+    const meetingAddress = getMeetingPointLabel();
+    const meetingCoordinates =
+      meetingType === MeetingPointType.STUDENT_HOME ? user?.coordinates ?? null
+      : meetingType === MeetingPointType.INSTRUCTOR_LOCATION ? instructor.coordinates ?? null
+      : customCoordinates;
+
+    try {
+      await addRequest({
+        instructor_id: instructor.id,
+        type: 'Aula Prática',
+        car_option: carChoice,
+        meeting_point: {
+          type: meetingType,
+          address: meetingAddress,
+          coordinates: meetingCoordinates,
+        },
+        requested_slots: selectedSlots,
+        requested_date: selectedDate ? selectedDate.toISOString().split('T')[0] : null,
+        price: instructor.pricePerHour,
+      });
+
+      const dateStr = selectedDate
+        ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+        : '';
+      const msg = `Sua solicitação foi enviada para ${instructor.name}.\n\nData: ${dateStr}\nHorários: ${selectedSlots.join(', ')}\nLocal: ${meetingAddress}\n\nAguarde a confirmação do instrutor.`;
+      if (Platform.OS === 'web') {
+        window.alert(`Aula Solicitada!\n\n${msg}`);
+        navigation.goBack();
+      } else {
+        Alert.alert('Aula Solicitada!', msg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
+      }
+    } catch (e) {
+      logger.error('Erro ao criar solicitação:', e.message);
+      Alert.alert('Erro', 'Não foi possível enviar a solicitação. Tente novamente.');
     }
   };
 
@@ -359,13 +408,31 @@ export default function InstructorDetailScreen({ route, navigation }) {
                 </Text>
               </View>
             ) : (
-              <TextInput
-                style={styles.meetingCustomInput}
-                placeholder="Digite o endereço do local de encontro"
-                placeholderTextColor="#9CA3AF"
-                value={customAddress}
-                onChangeText={setCustomAddress}
-              />
+              <View>
+                <View style={styles.meetingCustomRow}>
+                  <TextInput
+                    style={styles.meetingCustomInput}
+                    placeholder="Digite o endereço do local de encontro"
+                    placeholderTextColor="#9CA3AF"
+                    value={customAddress}
+                    onChangeText={text => { setCustomAddress(text); setCustomCoordinates(null); }}
+                  />
+                  <TouchableOpacity
+                    style={[styles.geocodeBtn, geocoding && { opacity: 0.6 }]}
+                    onPress={handleGeocodeCustom}
+                    disabled={geocoding || !customAddress.trim()}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name={geocoding ? 'hourglass-outline' : 'search-outline'} size={16} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+                {customCoordinates && (
+                  <View style={styles.geocodeSuccess}>
+                    <Ionicons name="checkmark-circle" size={13} color="#16A34A" />
+                    <Text style={styles.geocodeSuccessText}>Localização confirmada</Text>
+                  </View>
+                )}
+              </View>
             )}
           </View>
 
@@ -379,26 +446,32 @@ export default function InstructorDetailScreen({ route, navigation }) {
         </View>
 
         {/* Reviews */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Avaliações</Text>
-          {REVIEWS.map(review => (
-            <View key={review.id} style={styles.reviewCard}>
-              <View style={styles.reviewHeader}>
-                <View style={styles.reviewAvatar}>
-                  <Text style={styles.reviewAvatarText}>{review.author.charAt(0)}</Text>
-                </View>
-                <View style={styles.reviewInfo}>
-                  <Text style={styles.reviewAuthor}>{review.author}</Text>
-                  <View style={styles.reviewMeta}>
-                    <StarRow rating={review.rating} size={12} />
-                    <Text style={styles.reviewDate}>{review.date}</Text>
+        {reviews.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Avaliações</Text>
+            {reviews.map(review => {
+              const authorName = review.profiles?.name || 'Aluno';
+              const dateStr = new Date(review.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+              return (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewAvatar}>
+                      <Text style={styles.reviewAvatarText}>{authorName.charAt(0)}</Text>
+                    </View>
+                    <View style={styles.reviewInfo}>
+                      <Text style={styles.reviewAuthor}>{authorName}</Text>
+                      <View style={styles.reviewMeta}>
+                        <StarRow rating={review.rating} size={12} />
+                        <Text style={styles.reviewDate}>{dateStr}</Text>
+                      </View>
+                    </View>
                   </View>
+                  {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
                 </View>
-              </View>
-              <Text style={styles.reviewText}>{review.text}</Text>
-            </View>
-          ))}
-        </View>
+              );
+            })}
+          </View>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -534,10 +607,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10,
   },
   meetingAddressText: { fontSize: 12, color: PRIMARY, fontWeight: '500', flex: 1, lineHeight: 18 },
+  meetingCustomRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   meetingCustomInput: {
-    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, padding: 10,
+    flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, padding: 10,
     fontSize: 13, color: '#111827',
   },
+  geocodeBtn: {
+    backgroundColor: PRIMARY, borderRadius: 10, width: 38, height: 38,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  geocodeSuccess: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    marginTop: 6, paddingHorizontal: 4,
+  },
+  geocodeSuccessText: { fontSize: 12, fontWeight: '600', color: '#16A34A' },
 
   reviewCard: {
     borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 12, marginTop: 12,

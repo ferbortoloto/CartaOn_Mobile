@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Alert, Platform, PanResponder,
+  TextInput, Alert, Modal, PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import Avatar from '../../components/shared/Avatar';
+import { getReviews } from '../../services/instructors.service';
+import { logger } from '../../utils/logger';
 
 const PRIMARY = '#1D4ED8';
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
@@ -29,23 +31,21 @@ function getPriceInfo(price) {
   return PRICE_TIERS[3];
 }
 
-const achievements = [
-  { icon: 'trophy-outline', title: 'Mais de 500 alunos formados', year: '2023' },
-  { icon: 'star-outline', title: 'Avaliação 4.9/5.0', year: '2024' },
-  { icon: 'checkmark-circle-outline', title: '100% de aprovação', year: '2023' },
-];
-
-const recentReviews = [
-  { studentName: 'Ana Costa', rating: 5, comment: 'Excelente instrutor! Paciente e didático.', date: '2 dias atrás' },
-  { studentName: 'Pedro Santos', rating: 5, comment: 'Aulas claras e objetivas. Recomendo!', date: '1 semana atrás' },
-  { studentName: 'Maria Oliveira', rating: 4, comment: 'Muito profissional, me ajudou bastante.', date: '2 semanas atrás' },
-];
 
 export default function ProfileScreen({ route }) {
   const { user, logout, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [recentReviews, setRecentReviews] = useState([]);
   const scrollRef = useRef(null);
   const profSectionY = useRef(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    getReviews(user.id)
+      .then(data => setRecentReviews(data.slice(0, 5)))
+      .catch(e => logger.error('Erro ao carregar avaliações:', e.message));
+  }, [user?.id]);
 
   useEffect(() => {
     if (route?.params?.startEditing) {
@@ -66,18 +66,7 @@ export default function ProfileScreen({ route }) {
     bio: user?.bio || 'Instrutor de direção com mais de 5 anos de experiência, especializado em formação de condutores seguros e conscientes.',
   });
 
-  const handleLogout = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm('Tem certeza que deseja sair?')) {
-        logout();
-      }
-    } else {
-      Alert.alert('Sair', 'Tem certeza que deseja sair?', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', style: 'destructive', onPress: logout },
-      ]);
-    }
-  };
+  const handleLogout = () => setShowLogoutModal(true);
 
   const handleSave = async () => {
     try {
@@ -238,43 +227,32 @@ export default function ProfileScreen({ route }) {
           )}
         </View>
 
-        {/* Conquistas */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Conquistas</Text>
-          {achievements.map((a, i) => (
-            <View key={i} style={styles.achievementRow}>
-              <View style={styles.achievementIcon}>
-                <Ionicons name={a.icon} size={20} color={PRIMARY} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.achievementTitle}>{a.title}</Text>
-                <Text style={styles.achievementYear}>{a.year}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
         {/* Avaliações Recentes */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Avaliações Recentes</Text>
-            <TouchableOpacity><Text style={styles.seeAll}>Ver todas</Text></TouchableOpacity>
-          </View>
-          {recentReviews.map((r, i) => (
-            <View key={i} style={[styles.reviewRow, i < recentReviews.length - 1 && styles.reviewBorder]}>
-              <View style={styles.reviewTop}>
-                <View>
-                  <Text style={styles.reviewName}>{r.studentName}</Text>
-                  <View style={{ flexDirection: 'row', gap: 2, marginTop: 3 }}>
-                    {renderStars(r.rating)}
-                  </View>
-                </View>
-                <Text style={styles.reviewDate}>{r.date}</Text>
-              </View>
-              <Text style={styles.reviewComment}>{r.comment}</Text>
+        {recentReviews.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Avaliações Recentes</Text>
             </View>
-          ))}
-        </View>
+            {recentReviews.map((r, i) => {
+              const studentName = r.profiles?.name || 'Aluno';
+              const dateStr = new Date(r.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+              return (
+                <View key={r.id} style={[styles.reviewRow, i < recentReviews.length - 1 && styles.reviewBorder]}>
+                  <View style={styles.reviewTop}>
+                    <View>
+                      <Text style={styles.reviewName}>{studentName}</Text>
+                      <View style={{ flexDirection: 'row', gap: 2, marginTop: 3 }}>
+                        {renderStars(r.rating)}
+                      </View>
+                    </View>
+                    <Text style={styles.reviewDate}>{dateStr}</Text>
+                  </View>
+                  {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -282,6 +260,32 @@ export default function ProfileScreen({ route }) {
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Modal de confirmação de logout */}
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalIconWrap}>
+              <Ionicons name="log-out-outline" size={32} color="#EF4444" />
+            </View>
+            <Text style={styles.modalTitle}>Sair da conta</Text>
+            <Text style={styles.modalMessage}>Tem certeza que deseja sair?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowLogoutModal(false)}>
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalConfirm} onPress={logout}>
+                <Text style={styles.modalConfirmText}>Sair</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -563,4 +567,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF5F5', marginBottom: 16,
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
+
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: '#FFF', borderRadius: 20, padding: 28,
+    marginHorizontal: 32, alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+  },
+  modalIconWrap: {
+    width: 60, height: 60, borderRadius: 30,
+    backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  modalMessage: { fontSize: 14, color: '#6B7280', textAlign: 'center', marginBottom: 24 },
+  modalActions: { flexDirection: 'row', gap: 12, width: '100%' },
+  modalCancel: {
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    borderWidth: 1.5, borderColor: '#E5E7EB', alignItems: 'center',
+  },
+  modalCancelText: { fontSize: 15, fontWeight: '600', color: '#374151' },
+  modalConfirm: {
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    backgroundColor: '#EF4444', alignItems: 'center',
+  },
+  modalConfirmText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
 });

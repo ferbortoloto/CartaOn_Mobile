@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Modal, Animated, Platform,
+  Modal, Animated, Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,22 +37,24 @@ export default function PlanCheckoutScreen({ route, navigation }) {
   const savings = originalTotal - plan.price;
   const discountPct = Math.round((savings / originalTotal) * 100);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setLoading(true);
-    // Simulate processing
-    setTimeout(() => {
-      purchasePlan({
+    try {
+      await purchasePlan({
         plan,
         instructor,
         paymentMethod: selectedPayment,
       });
-      setLoading(false);
       setShowSuccess(true);
       Animated.sequence([
         Animated.spring(checkScale, { toValue: 1, useNativeDriver: true, tension: 80, friction: 7 }),
         Animated.timing(checkOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
-    }, 1200);
+    } catch {
+      Alert.alert('Erro', 'Não foi possível finalizar a compra. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSuccessClose = () => {

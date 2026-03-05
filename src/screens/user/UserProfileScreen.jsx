@@ -1,51 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, Alert, Platform,
+  TextInput, Alert, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { useSchedule } from '../../context/ScheduleContext';
+import { geocodeAddress } from '../../utils/geocoding';
 
 const PRIMARY = '#1D4ED8';
 
-const ACHIEVEMENTS = [
-  { icon: 'car-outline', label: '5 Aulas', color: '#2563EB', bg: '#EFF6FF' },
-  { icon: 'star-outline', label: 'Aluno 5★', color: '#EAB308', bg: '#FFFBEB' },
-  { icon: 'checkmark-circle-outline', label: 'Verificado', color: '#16A34A', bg: '#F0FDF4' },
-];
-
-const RECENT_CLASSES = [
-  { id: '1', instructor: 'Maria Santos', type: 'Aula Prática', date: '18 Fev 2026', status: 'Concluída', statusColor: '#16A34A' },
-  { id: '2', instructor: 'Ana Costa', type: 'Simulado', date: '14 Fev 2026', status: 'Concluída', statusColor: '#16A34A' },
-  { id: '3', instructor: 'Carlos Oliveira', type: 'Aula Teórica', date: '10 Fev 2026', status: 'Cancelada', statusColor: '#EF4444' },
-];
+const statusMap = {
+  scheduled: { label: 'Agendada', color: '#2563EB' },
+  completed: { label: 'Concluída', color: '#16A34A' },
+  cancelled: { label: 'Cancelada', color: '#EF4444' },
+};
 
 export default function UserProfileScreen() {
   const { user, logout, updateProfile } = useAuth();
+  const { events } = useSchedule();
   const [editing, setEditing] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [name, setName] = useState(user?.name || 'Aluno CartaOn');
   const [email, setEmail] = useState(user?.email || 'user@gmail.com');
   const [phone, setPhone] = useState(user?.phone || '(11) 98765-4321');
   const [goal, setGoal] = useState(user?.goal || 'Categoria B');
   const [address, setAddress] = useState(user?.address || '');
 
+  const classEvents = useMemo(() =>
+    events.filter(e => e.type === 'class' || e.type === 'CLASS'),
+  [events]);
+
+  const recentClasses = useMemo(() =>
+    [...classEvents]
+      .sort((a, b) => new Date(b.startDateTime) - new Date(a.startDateTime))
+      .slice(0, 5),
+  [classEvents]);
+
+  const uniqueInstructors = useMemo(() => {
+    const ids = new Set(classEvents.map(e => e.instructorId).filter(Boolean));
+    return ids.size;
+  }, [classEvents]);
+
+  const totalHours = useMemo(() => {
+    const mins = classEvents.reduce((s, e) => {
+      if (!e.startDateTime || !e.endDateTime) return s;
+      return s + (new Date(e.endDateTime) - new Date(e.startDateTime)) / 60000;
+    }, 0);
+    return Math.round(mins / 60);
+  }, [classEvents]);
+
   const handleSave = async () => {
-    await updateProfile({ name, phone, goal, address });
+    let coordinates = user?.coordinates ?? null;
+    const addressChanged = address !== (user?.address || '');
+    if (addressChanged && address.trim()) {
+      try {
+        const coords = await geocodeAddress(address);
+        if (coords) coordinates = { latitude: coords.latitude, longitude: coords.longitude };
+      } catch {
+        // geocoding falhou — salva sem coordenadas
+      }
+    }
+    await updateProfile({ name, phone, goal, address, coordinates });
     setEditing(false);
     Alert.alert('Perfil atualizado!', 'Suas informações foram salvas com sucesso.');
   };
 
-  const handleLogout = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm('Deseja sair da sua conta?')) logout();
-    } else {
-      Alert.alert('Sair', 'Deseja sair da sua conta?', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', style: 'destructive', onPress: logout },
-      ]);
-    }
-  };
+  const handleLogout = () => setShowLogoutModal(true);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -86,31 +108,18 @@ export default function UserProfileScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>5</Text>
+            <Text style={styles.statValue}>{classEvents.length}</Text>
             <Text style={styles.statLabel}>Aulas</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>7h</Text>
+            <Text style={styles.statValue}>{totalHours}h</Text>
             <Text style={styles.statLabel}>Horas</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>2</Text>
+            <Text style={styles.statValue}>{uniqueInstructors}</Text>
             <Text style={styles.statLabel}>Instrutores</Text>
-          </View>
-        </View>
-
-        {/* Achievements */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Conquistas</Text>
-          <View style={styles.achievementsRow}>
-            {ACHIEVEMENTS.map((a, i) => (
-              <View key={i} style={[styles.achievementItem, { backgroundColor: a.bg }]}>
-                <Ionicons name={a.icon} size={22} color={a.color} />
-                <Text style={[styles.achievementLabel, { color: a.color }]}>{a.label}</Text>
-              </View>
-            ))}
           </View>
         </View>
 
@@ -154,23 +163,29 @@ export default function UserProfileScreen() {
         </View>
 
         {/* Recent classes */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aulas Recentes</Text>
-          {RECENT_CLASSES.map(cls => (
-            <View key={cls.id} style={styles.classRow}>
-              <View style={[styles.classIcon, { backgroundColor: `${PRIMARY}20` }]}>
-                <Ionicons name="car-outline" size={18} color={PRIMARY} />
-              </View>
-              <View style={styles.classInfo}>
-                <Text style={styles.classType}>{cls.type}</Text>
-                <Text style={styles.classInstructor}>{cls.instructor} · {cls.date}</Text>
-              </View>
-              <View style={[styles.classStatus, { backgroundColor: `${cls.statusColor}20` }]}>
-                <Text style={[styles.classStatusText, { color: cls.statusColor }]}>{cls.status}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        {recentClasses.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Aulas Recentes</Text>
+            {recentClasses.map(cls => {
+              const cfg = statusMap[cls.status] || { label: cls.status, color: '#6B7280' };
+              const dateStr = new Date(cls.startDateTime).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+              return (
+                <View key={cls.id} style={styles.classRow}>
+                  <View style={[styles.classIcon, { backgroundColor: `${PRIMARY}20` }]}>
+                    <Ionicons name="car-outline" size={18} color={PRIMARY} />
+                  </View>
+                  <View style={styles.classInfo}>
+                    <Text style={styles.classType}>{cls.title || 'Aula'}</Text>
+                    <Text style={styles.classInstructor}>{dateStr}</Text>
+                  </View>
+                  <View style={[styles.classStatus, { backgroundColor: `${cfg.color}20` }]}>
+                    <Text style={[styles.classStatusText, { color: cfg.color }]}>{cfg.label}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -180,6 +195,32 @@ export default function UserProfileScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Modal de confirmação de logout */}
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalIconWrap}>
+              <Ionicons name="log-out-outline" size={32} color="#EF4444" />
+            </View>
+            <Text style={styles.modalTitle}>Sair da conta</Text>
+            <Text style={styles.modalMessage}>Deseja sair da sua conta?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowLogoutModal(false)}>
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalConfirm} onPress={logout}>
+                <Text style={styles.modalConfirmText}>Sair</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -313,4 +354,33 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
+
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: '#FFF', borderRadius: 20, padding: 28,
+    marginHorizontal: 32, alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+  },
+  modalIconWrap: {
+    width: 60, height: 60, borderRadius: 30,
+    backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  modalMessage: { fontSize: 14, color: '#6B7280', textAlign: 'center', marginBottom: 24 },
+  modalActions: { flexDirection: 'row', gap: 12, width: '100%' },
+  modalCancel: {
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    borderWidth: 1.5, borderColor: '#E5E7EB', alignItems: 'center',
+  },
+  modalCancelText: { fontSize: 15, fontWeight: '600', color: '#374151' },
+  modalConfirm: {
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    backgroundColor: '#EF4444', alignItems: 'center',
+  },
+  modalConfirmText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
 });

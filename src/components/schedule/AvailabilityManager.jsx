@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../hooks/useAuth';
+import { getAvailability, saveAvailability } from '../../services/events.service';
+import { logger } from '../../utils/logger';
 import {
-  initialAvailability, toggleTimeAvailability, TimeSlots,
+  toggleTimeAvailability, TimeSlots,
   WeekDays, WeekDaysNames, WeekDaysShort,
 } from '../../data/availabilityData';
 
@@ -12,9 +14,59 @@ const DAYS_ORDER = [
   WeekDays.THURSDAY, WeekDays.FRIDAY, WeekDays.SATURDAY, WeekDays.SUNDAY,
 ];
 
+const EMPTY_AVAILABILITY = Object.fromEntries(
+  Object.values(WeekDays).map(d => [d, []])
+);
+
+// Converte formato do banco { [dayOfWeek]: ['08:00', ...] } para o formato do app
+// dayOfWeek do banco é número (1=Seg ... 7=Dom), WeekDays usa strings.
+// Mantemos o formato do app (WeekDays) como chave.
+const DB_DAY_TO_APP = {
+  1: WeekDays.MONDAY,
+  2: WeekDays.TUESDAY,
+  3: WeekDays.WEDNESDAY,
+  4: WeekDays.THURSDAY,
+  5: WeekDays.FRIDAY,
+  6: WeekDays.SATURDAY,
+  7: WeekDays.SUNDAY,
+};
+
+const APP_DAY_TO_DB = Object.fromEntries(
+  Object.entries(DB_DAY_TO_APP).map(([k, v]) => [v, parseInt(k)])
+);
+
+function dbToApp(dbAvailability) {
+  const result = { ...EMPTY_AVAILABILITY };
+  for (const [day, slots] of Object.entries(dbAvailability)) {
+    const appDay = DB_DAY_TO_APP[parseInt(day)];
+    if (appDay) result[appDay] = slots;
+  }
+  return result;
+}
+
+function appToDb(appAvailability) {
+  const result = {};
+  for (const [appDay, slots] of Object.entries(appAvailability)) {
+    const dbDay = APP_DAY_TO_DB[appDay];
+    if (dbDay !== undefined) result[dbDay] = slots;
+  }
+  return result;
+}
+
 export default function AvailabilityManager() {
+  const { user } = useAuth();
   const [selectedDay, setSelectedDay] = useState(WeekDays.MONDAY);
-  const [availability, setAvailability] = useState(initialAvailability);
+  const [availability, setAvailability] = useState(EMPTY_AVAILABILITY);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    getAvailability(user.id)
+      .then(dbData => setAvailability(dbToApp(dbData)))
+      .catch(e => logger.error('Erro ao carregar disponibilidade:', e.message))
+      .finally(() => setLoading(false));
+  }, [user?.id]);
 
   const toggle = (time) => {
     setAvailability(prev => toggleTimeAvailability(prev, selectedDay, time));
@@ -29,17 +81,30 @@ export default function AvailabilityManager() {
   };
 
   const save = async () => {
+    if (!user?.id) return;
+    setSaving(true);
     try {
-      await AsyncStorage.setItem('availability', JSON.stringify(availability));
+      await saveAvailability(user.id, appToDb(availability));
       Alert.alert('Salvo!', 'Disponibilidade atualizada com sucesso.');
-    } catch {
+    } catch (e) {
+      logger.error('Erro ao salvar disponibilidade:', e.message);
       Alert.alert('Erro', 'Não foi possível salvar a disponibilidade.');
+    } finally {
+      setSaving(false);
     }
   };
 
   const currentSlots = availability[selectedDay] || [];
   const totalSlots = Object.values(availability).reduce((acc, slots) => acc + slots.length, 0);
   const daysWithSlots = Object.values(availability).filter(s => s.length > 0).length;
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Carregando disponibilidade...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -111,8 +176,8 @@ export default function AvailabilityManager() {
         </View>
 
         {/* Save button */}
-        <TouchableOpacity style={styles.saveBtn} onPress={save}>
-          <Text style={styles.saveBtnText}>Salvar Disponibilidade</Text>
+        <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={save} disabled={saving}>
+          <Text style={styles.saveBtnText}>{saving ? 'Salvando...' : 'Salvar Disponibilidade'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -121,6 +186,8 @@ export default function AvailabilityManager() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { fontSize: 14, color: '#9CA3AF' },
   dayScroll: { flexGrow: 0, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   dayScrollContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
   dayPill: {
@@ -144,7 +211,7 @@ const styles = StyleSheet.create({
   dayActions: { flexDirection: 'row', gap: 8 },
   actionBtn: {
     paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: '#F5F0FF', borderRadius: 8,
+    backgroundColor: '#EFF6FF', borderRadius: 8,
   },
   actionBtnClear: { backgroundColor: '#FEF2F2' },
   actionBtnText: { fontSize: 12, fontWeight: '700', color: PRIMARY },
@@ -168,7 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, backgroundColor: '#F9FAFB',
     borderWidth: 1.5, borderColor: '#E5E7EB',
   },
-  slotActive: { backgroundColor: '#F5F0FF', borderColor: PRIMARY },
+  slotActive: { backgroundColor: '#EFF6FF', borderColor: PRIMARY },
   slotText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
   slotTextActive: { color: PRIMARY },
 

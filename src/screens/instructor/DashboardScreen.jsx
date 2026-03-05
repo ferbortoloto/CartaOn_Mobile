@@ -22,7 +22,7 @@ const EXPANDED_H = SCREEN_H * 0.48;
 const COLLAPSED_H = 88; // handle + kpi strip
 const MIDPOINT = (EXPANDED_H + COLLAPSED_H) / 2;
 
-const INSTRUCTOR_LOCATION = { latitude: -23.5505, longitude: -46.6333 };
+const DEFAULT_LOCATION = { latitude: -23.5505, longitude: -46.6333 };
 
 const TYPE_COLOR = {
   'Aula Prática': { bg: '#F0FDF4', text: '#16A34A' },
@@ -38,102 +38,6 @@ const CLASS_TYPE_ICON = {
   'Misto':        'grid-outline',
 };
 
-// Instructor ID for mock — must match IDs in src/data/instructors.js ('1' = Maria Santos)
-const DEMO_INSTRUCTOR_ID = '1';
-
-const INITIAL_REQUESTS = [
-  {
-    id: '1', studentName: 'Ana Costa',
-    studentAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop',
-    location: 'Av. Paulista, 1000 - Bela Vista', distance: '2.3 km', estimatedTime: '8 min',
-    type: 'Aula Prática', price: 85, rating: 4.8, phone: '(11) 98765-4321',
-    status: 'pending', requestTime: '2 min atrás', carOption: 'instructor',
-    coordinates: { latitude: -23.5634, longitude: -46.6521 },
-    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Av. Paulista, 1000 - Bela Vista', coordinates: { latitude: -23.5634, longitude: -46.6521 } },
-  },
-  {
-    id: '2', studentName: 'Pedro Santos',
-    studentAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
-    location: 'Rua Augusta, 1500 - Consolação', distance: '3.1 km', estimatedTime: '12 min',
-    type: 'Aula Teórica', price: 60, rating: 4.9, phone: '(11) 97654-3210',
-    status: 'pending', requestTime: '5 min atrás', carOption: 'student',
-    coordinates: { latitude: -23.5505, longitude: -46.6433 },
-    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Rua Augusta, 1500 - Consolação', coordinates: { latitude: -23.5505, longitude: -46.6433 } },
-  },
-  {
-    id: '3', studentName: 'Maria Oliveira',
-    studentAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop',
-    location: 'Alameda Santos, 2000 - Jardim Paulista', distance: '1.8 km', estimatedTime: '6 min',
-    type: 'Simulado', price: 70, rating: 5.0, phone: '(11) 96543-2109',
-    status: 'pending', requestTime: '8 min atrás', carOption: 'instructor',
-    coordinates: { latitude: -23.5669, longitude: -46.6555 },
-    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Alameda Santos, 2000 - Jardim Paulista', coordinates: { latitude: -23.5669, longitude: -46.6555 } },
-  },
-  {
-    id: '4', studentName: 'João Silva',
-    studentAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop',
-    location: 'Rua Oscar Freire, 500 - Pinheiros', distance: '4.2 km', estimatedTime: '15 min',
-    type: 'Aula Prática', price: 85, rating: 4.7, phone: '(11) 95432-1098',
-    status: 'accepted', requestTime: '10 min atrás', carOption: 'student',
-    coordinates: { latitude: -23.5613, longitude: -46.6689 },
-    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Rua Oscar Freire, 500 - Pinheiros', coordinates: { latitude: -23.5613, longitude: -46.6689 } },
-  },
-  {
-    id: '5', studentName: 'Larissa Mendes',
-    studentAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&h=80&fit=crop',
-    location: 'R. Frei Caneca, 800 - Consolação', distance: '1.5 km', estimatedTime: '5 min',
-    type: 'Aula Teórica', price: 60, rating: 4.6, phone: '(11) 94321-0987',
-    status: 'pending', requestTime: '11 min atrás', carOption: 'student',
-    coordinates: { latitude: -23.5528, longitude: -46.6475 },
-    meetingPoint: { type: MeetingPointType.INSTRUCTOR_LOCATION, address: 'Av. Paulista, 500 - Bela Vista (Autoescola)', coordinates: { latitude: -23.5634, longitude: -46.6543 } },
-  },
-  {
-    id: '6', studentName: 'Rafael Torres',
-    studentAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop',
-    location: 'Av. Rebouças, 600 - Pinheiros', distance: '5.0 km', estimatedTime: '18 min',
-    type: 'Aula Prática', price: 90, rating: 4.5, phone: '(11) 93210-9876',
-    status: 'pending', requestTime: '14 min atrás', carOption: 'instructor',
-    coordinates: { latitude: -23.5580, longitude: -46.6720 },
-    meetingPoint: { type: MeetingPointType.STUDENT_HOME, address: 'Av. Rebouças, 600 - Pinheiros', coordinates: { latitude: -23.5580, longitude: -46.6720 } },
-  },
-  {
-    id: '7', studentName: 'Camila Ramos',
-    studentAvatar: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop',
-    location: 'R. Haddock Lobo, 300 - Cerqueira César', distance: '2.7 km', estimatedTime: '10 min',
-    type: 'Simulado', price: 75, rating: 4.8, phone: '(11) 92109-8765',
-    status: 'pending', requestTime: '20 min atrás', carOption: 'student',
-    coordinates: { latitude: -23.5596, longitude: -46.6608 },
-    meetingPoint: { type: MeetingPointType.CUSTOM, address: 'R. Haddock Lobo, 300 - Cerqueira César', coordinates: { latitude: -23.5596, longitude: -46.6608 } },
-  },
-];
-
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 'n1', type: 'request', title: 'Nova solicitação de aula',
-    body: 'Ana Costa quer Aula Prática • 2.3 km • R$ 85', time: '2 min atrás', read: false, requestId: '1',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop',
-  },
-  {
-    id: 'n2', type: 'message', title: 'Mensagem de Pedro Santos',
-    body: 'Professor, posso adiantar a aula para as 14h hoje?', time: '5 min atrás', read: false,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop',
-  },
-  {
-    id: 'n3', type: 'late', title: 'Aluno atrasado',
-    body: 'Maria Oliveira está 15 min atrasada para a aula das 10h00', time: '8 min atrás', read: false,
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop',
-  },
-  {
-    id: 'n4', type: 'request', title: 'Nova solicitação de aula',
-    body: 'Pedro Santos quer Aula Teórica • 3.1 km • R$ 60', time: '5 min atrás', read: false, requestId: '2',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop',
-  },
-  {
-    id: 'n5', type: 'message', title: 'Mensagem de Ana Costa',
-    body: 'Olá! Confirmo presença para amanhã às 9h. Obrigada!', time: '20 min atrás', read: true,
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop',
-  },
-];
 
 const NOTIF_STYLE = {
   request: { bg: '#EFF6FF', icon: 'notifications-outline', color: '#1D4ED8', label: 'Solicitação' },
@@ -143,12 +47,11 @@ const NOTIF_STYLE = {
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
-  const { addEvent, addContact, checkTravelConflict } = useSchedule();
+  const { requests, addEvent, addContact, acceptRequest, rejectRequest, checkTravelConflict } = useSchedule();
   const { getInstructorPlans, togglePlan, addPlan } = usePlans();
   const { activeSession, elapsedSeconds, isCompleted, generateCode, startSession, endSession } = useSession();
 
-  const [requests, setRequests] = useState(INITIAL_REQUESTS);
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [panelExpanded, setPanelExpanded] = useState(true);
@@ -168,7 +71,7 @@ export default function DashboardScreen({ navigation }) {
   const panelHeight = useRef(new Animated.Value(EXPANDED_H)).current;
   const settledHeight = useRef(EXPANDED_H);
 
-  const instructorPlans = getInstructorPlans(DEMO_INSTRUCTOR_ID);
+  const instructorPlans = getInstructorPlans(user?.id);
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const acceptedRequests = requests.filter(r => r.status === 'accepted');
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -180,7 +83,7 @@ export default function DashboardScreen({ navigation }) {
       return;
     }
     addPlan({
-      instructorId: DEMO_INSTRUCTOR_ID,
+      instructorId: user?.id,
       name: newPlanName.trim(),
       description: newPlanDesc.trim(),
       classCount: parseInt(newPlanCount, 10) || 5,
@@ -237,8 +140,10 @@ export default function DashboardScreen({ navigation }) {
     }),
   ).current;
 
+  const instructorLocation = user?.coordinates || DEFAULT_LOCATION;
+
   const mapMarkers = useMemo(() => [
-    { id: 'self', latitude: INSTRUCTOR_LOCATION.latitude, longitude: INSTRUCTOR_LOCATION.longitude, label: 'Você', color: PRIMARY, type: 'self' },
+    { id: 'self', latitude: instructorLocation.latitude, longitude: instructorLocation.longitude, label: 'Você', color: PRIMARY, type: 'self' },
     ...requests.map(req => ({
       id: req.id,
       latitude: req.coordinates.latitude,
@@ -252,7 +157,7 @@ export default function DashboardScreen({ navigation }) {
   // Calcula info de deslocamento para uma solicitação pendente,
   // considerando que a aula seria criada ~2h a partir de agora.
   const getRequestTravelInfo = (request) => {
-    const durationMinutes = user?.classDuration || 60;
+    const durationMinutes = user?.class_duration || 60;
     const newStart = new Date(Date.now() + 2 * 60 * 60 * 1000);
     const newEnd = new Date(newStart.getTime() + durationMinutes * 60 * 1000);
     const coords = request.meetingPoint?.coordinates || null;
@@ -266,32 +171,30 @@ export default function DashboardScreen({ navigation }) {
     return 'Local personalizado';
   };
 
-  const doAcceptRequest = (request) => {
-    const newContact = addContact({
-      name: request.studentName,
-      email: `${request.studentName.toLowerCase().replace(' ', '.')}@email.com`,
-      phone: request.phone, status: 'active',
-      notes: `Aluno solicitou aula de ${request.type}`,
-    });
-    const durationMinutes = user?.classDuration || 60;
-    addEvent({
-      title: `Aula de ${request.type} - ${request.studentName}`,
-      type: 'class', priority: 'medium',
-      startDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      endDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + durationMinutes * 60 * 1000).toISOString(),
-      contactId: newContact?.id, location: request.meetingPoint?.address || request.location,
-      meetingPoint: request.meetingPoint,
-      description: `Aula de ${request.type} via app. Valor: R$ ${request.price}`,
-      status: 'scheduled',
-    });
-    const code = generateCode(request.studentName, user?.name || 'Instrutor', durationMinutes);
-    setRequests(prev => prev.map(r => r.id === request.id ? { ...r, status: 'accepted' } : r));
-    setNotifications(prev => prev.map(n => n.requestId === request.id ? { ...n, read: true } : n));
-    setSelectedRequest(null);
-    Alert.alert(
-      'Aula aceita! ✓',
-      `Aula com ${request.studentName} adicionada à agenda.\n\nCódigo da aula:\n${code}\n\nMostre ao aluno ou informe o código acima para iniciar o timer.`,
-    );
+  const doAcceptRequest = async (request) => {
+    try {
+      const durationMinutes = user?.class_duration || 60;
+      const event = await addEvent({
+        title: `Aula de ${request.type} - ${request.studentName}`,
+        type: 'class', priority: 'medium',
+        startDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        endDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + durationMinutes * 60 * 1000).toISOString(),
+        studentId: request.student_id,
+        location: request.meetingPoint?.address || request.location,
+        meetingPoint: request.meetingPoint,
+        description: `Aula de ${request.type} via app. Valor: R$ ${request.price}`,
+        status: 'scheduled',
+      });
+      await acceptRequest(request.id);
+      const code = await generateCode({ studentId: request.student_id, eventId: event?.id, durationMinutes });
+      setSelectedRequest(null);
+      Alert.alert(
+        'Aula aceita! ✓',
+        `Aula com ${request.studentName} adicionada à agenda.\n\nCódigo da aula:\n${code}\n\nMostre ao aluno ou informe o código acima para iniciar o timer.`,
+      );
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível aceitar a solicitação. Tente novamente.');
+    }
   };
 
   const handleAcceptRequest = (requestId) => {
@@ -336,9 +239,12 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  const handleRejectRequest = (requestId) => {
-    setRequests(prev => prev.filter(r => r.id !== requestId));
-    setNotifications(prev => prev.filter(n => n.requestId !== requestId));
+  const handleRejectRequest = async (requestId) => {
+    try {
+      await rejectRequest(requestId);
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível rejeitar a solicitação.');
+    }
     setSelectedRequest(null);
   };
 
@@ -358,7 +264,7 @@ export default function DashboardScreen({ navigation }) {
     <View style={styles.container}>
       {/* MAP */}
       <LeafletMapView
-        center={{ lat: INSTRUCTOR_LOCATION.latitude, lng: INSTRUCTOR_LOCATION.longitude }}
+        center={{ lat: instructorLocation.latitude, lng: instructorLocation.longitude }}
         zoom={14} markers={mapMarkers}
         onMarkerPress={(id) => {
           const req = requests.find(r => r.id === id);
@@ -372,7 +278,7 @@ export default function DashboardScreen({ navigation }) {
           {/* Row 1: avatar + name + bell */}
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
-              <Avatar uri={user?.avatar} name={user?.name} size={40} />
+              <Avatar uri={user?.avatar_url} name={user?.name} size={40} />
               <View>
                 <Text style={styles.headerGreeting}>Bem-vindo</Text>
                 <Text style={styles.headerName}>{user?.name || 'Instrutor CartaOn'}</Text>
@@ -395,12 +301,12 @@ export default function DashboardScreen({ navigation }) {
           >
             <Ionicons name="cash-outline" size={11} color="#6B7280" />
             <Text style={styles.headerConfigText}>
-              {user?.pricePerHour ? `R$ ${user.pricePerHour}/h` : '—'}
+              {user?.price_per_hour ? `R$ ${user.price_per_hour}/h` : '—'}
             </Text>
             <View style={styles.headerStatDivider} />
             <Ionicons name="timer-outline" size={11} color="#6B7280" />
             <Text style={styles.headerConfigText}>
-              {user?.classDuration ? `${user.classDuration} min` : '60 min'}
+              {user?.class_duration ? `${user.class_duration} min` : '60 min'}
             </Text>
             <View style={{ flex: 1 }} />
             <Ionicons name="create-outline" size={11} color="#9CA3AF" />

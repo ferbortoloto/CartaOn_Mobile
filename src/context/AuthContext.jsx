@@ -76,14 +76,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    // Suprime eventos de auth enquanto valida senha + descarta sessão temporária + envia OTP
-    suppressAuthRef.current = true;
-    try {
-      await signIn(email, password);
-    } finally {
-      suppressAuthRef.current = false;
-    }
-    return { needsOtp: true };
+    await signIn(email, password);
+    return { needsOtp: false };
   };
 
   const register = async (formData) => {
