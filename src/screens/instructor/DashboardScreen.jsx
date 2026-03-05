@@ -18,9 +18,11 @@ import { MeetingPointType } from '../../data/scheduleData';
 
 const PRIMARY = '#1D4ED8';
 const SCREEN_H = Dimensions.get('window').height;
-const EXPANDED_H = SCREEN_H * 0.48;
 const COLLAPSED_H = 88; // handle + kpi strip
-const MIDPOINT = (EXPANDED_H + COLLAPSED_H) / 2;
+const EXPANDED_H = SCREEN_H * 0.48;
+const FULL_H = SCREEN_H * 0.88; // terceiro snap — painel quase full-screen
+const MIDPOINT_LOW = (COLLAPSED_H + EXPANDED_H) / 2;
+const MIDPOINT_HIGH = (EXPANDED_H + FULL_H) / 2;
 
 const DEFAULT_LOCATION = { latitude: -23.5505, longitude: -46.6333 };
 
@@ -54,7 +56,7 @@ export default function DashboardScreen({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [panelExpanded, setPanelExpanded] = useState(true);
+  const [panelState, setPanelState] = useState('expanded'); // 'collapsed' | 'expanded' | 'full'
   const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'plans'
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -101,10 +103,10 @@ export default function DashboardScreen({ navigation }) {
     Alert.alert('Plano criado!', 'Seu novo plano já está disponível para os alunos.');
   };
 
-  const animateTo = (toValue, expanded) => {
+  const animateTo = (toValue, state) => {
     settledHeight.current = toValue;
     Animated.spring(panelHeight, { toValue, useNativeDriver: false, tension: 70, friction: 12 }).start();
-    setPanelExpanded(expanded);
+    setPanelState(state);
   };
 
   const panResponder = useRef(
@@ -118,24 +120,31 @@ export default function DashboardScreen({ navigation }) {
       },
       onPanResponderMove: (_, gs) => {
         panelHeight.setValue(
-          Math.max(COLLAPSED_H, Math.min(EXPANDED_H, settledHeight.current - gs.dy)),
+          Math.max(COLLAPSED_H, Math.min(FULL_H, settledHeight.current - gs.dy)),
         );
       },
       onPanResponderRelease: (_, gs) => {
         const proj = settledHeight.current - gs.dy;
-        if (gs.vy > 0.4 || (gs.dy > 50 && proj < EXPANDED_H)) {
-          animateTo(COLLAPSED_H, false);
-        } else if (gs.vy < -0.4 || gs.dy < -50) {
-          animateTo(EXPANDED_H, true);
+        if (gs.vy > 0.5) {
+          // Swipe rápido para baixo — desce um nível
+          if (settledHeight.current >= FULL_H - 10) animateTo(EXPANDED_H, 'expanded');
+          else animateTo(COLLAPSED_H, 'collapsed');
+        } else if (gs.vy < -0.5) {
+          // Swipe rápido para cima — sobe um nível
+          if (settledHeight.current <= COLLAPSED_H + 10) animateTo(EXPANDED_H, 'expanded');
+          else animateTo(FULL_H, 'full');
         } else {
-          const snap = proj > MIDPOINT ? EXPANDED_H : COLLAPSED_H;
-          animateTo(snap, snap === EXPANDED_H);
+          // Snap pelo posição projetada (3 pontos)
+          if (proj > MIDPOINT_HIGH) animateTo(FULL_H, 'full');
+          else if (proj > MIDPOINT_LOW) animateTo(EXPANDED_H, 'expanded');
+          else animateTo(COLLAPSED_H, 'collapsed');
         }
       },
       onPanResponderTerminate: (_, gs) => {
         const proj = settledHeight.current - gs.dy;
-        const snap = proj > MIDPOINT ? EXPANDED_H : COLLAPSED_H;
-        animateTo(snap, snap === EXPANDED_H);
+        if (proj > MIDPOINT_HIGH) animateTo(FULL_H, 'full');
+        else if (proj > MIDPOINT_LOW) animateTo(EXPANDED_H, 'expanded');
+        else animateTo(COLLAPSED_H, 'collapsed');
       },
     }),
   ).current;
@@ -268,7 +277,7 @@ export default function DashboardScreen({ navigation }) {
         zoom={14} markers={mapMarkers}
         onMarkerPress={(id) => {
           const req = requests.find(r => r.id === id);
-          if (req?.status === 'pending') { animateTo(EXPANDED_H, true); setSelectedRequest(req); }
+          if (req?.status === 'pending') { animateTo(EXPANDED_H, 'expanded'); setSelectedRequest(req); }
         }}
       />
 
@@ -321,7 +330,7 @@ export default function DashboardScreen({ navigation }) {
         {/* Drag handle */}
         <View style={styles.handleRow} {...panResponder.panHandlers}>
           <View style={styles.panelHandle} />
-          <Ionicons name={panelExpanded ? 'chevron-down' : 'chevron-up'} size={13} color="#D1D5DB" style={{ marginTop: 2 }} />
+          <Ionicons name={panelState === 'full' ? 'chevron-down' : 'chevron-up'} size={13} color="#D1D5DB" style={{ marginTop: 2 }} />
         </View>
 
         {/* ── KPI strip ── */}
@@ -369,7 +378,7 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         {/* ── Tab switcher ── */}
-        {!activeSession && panelExpanded && (
+        {!activeSession && panelState !== 'collapsed' && (
           <View style={styles.tabSwitcher}>
             <TouchableOpacity
               style={[styles.tabBtn, activeTab === 'requests' && styles.tabBtnActive]}
@@ -401,7 +410,7 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         {/* ── REQUESTS TAB ── */}
-        {!activeSession && panelExpanded && activeTab === 'requests' && (
+        {!activeSession && panelState !== 'collapsed' && activeTab === 'requests' && (
           pendingRequests.length === 0 ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
@@ -521,7 +530,7 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         {/* ── PLANS TAB ── */}
-        {!activeSession && panelExpanded && activeTab === 'plans' && (
+        {!activeSession && panelState !== 'collapsed' && activeTab === 'plans' && (
           <ScrollView
             style={styles.cardsList}
             contentContainerStyle={styles.cardsContent}

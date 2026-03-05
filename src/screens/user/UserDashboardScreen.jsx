@@ -23,9 +23,11 @@ const CATEGORY_FILTERS = [
 ];
 
 const SCREEN_H = Dimensions.get('window').height;
-const EXPANDED_H = SCREEN_H * 0.52;
 const COLLAPSED_H = 116; // handle row + search + filters
-const MIDPOINT = (EXPANDED_H + COLLAPSED_H) / 2;
+const EXPANDED_H = SCREEN_H * 0.52;
+const FULL_H = SCREEN_H * 0.88; // terceiro snap — painel quase full-screen
+const MIDPOINT_LOW = (COLLAPSED_H + EXPANDED_H) / 2;
+const MIDPOINT_HIGH = (EXPANDED_H + FULL_H) / 2;
 
 export default function UserDashboardScreen({ navigation }) {
   const { user } = useAuth();
@@ -33,14 +35,14 @@ export default function UserDashboardScreen({ navigation }) {
   const { activeSession, elapsedSeconds, isCompleted, latestPendingCode } = useSession();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [panelExpanded, setPanelExpanded] = useState(true);
+  const [panelState, setPanelState] = useState('expanded'); // 'collapsed' | 'expanded' | 'full'
   const flatRef = useRef(null);
   const mapRef = useRef(null);
   const panelHeight = useRef(new Animated.Value(EXPANDED_H)).current;
   // Track the last "settled" height so PanResponder always has the right base
   const settledHeight = useRef(EXPANDED_H);
 
-  const animateTo = (toValue, expanded) => {
+  const animateTo = (toValue, state) => {
     settledHeight.current = toValue;
     Animated.spring(panelHeight, {
       toValue,
@@ -48,11 +50,11 @@ export default function UserDashboardScreen({ navigation }) {
       tension: 70,
       friction: 12,
     }).start();
-    setPanelExpanded(expanded);
+    setPanelState(state);
   };
 
   const ensureExpanded = () => {
-    if (!panelExpanded) animateTo(EXPANDED_H, true);
+    if (panelState === 'collapsed') animateTo(EXPANDED_H, 'expanded');
   };
 
   const panResponder = useRef(
@@ -67,30 +69,32 @@ export default function UserDashboardScreen({ navigation }) {
         settledHeight.current = panelHeight._value ?? settledHeight.current;
       },
       onPanResponderMove: (_, gs) => {
-        const newH = Math.max(
-          COLLAPSED_H,
-          Math.min(EXPANDED_H, settledHeight.current - gs.dy),
+        panelHeight.setValue(
+          Math.max(COLLAPSED_H, Math.min(FULL_H, settledHeight.current - gs.dy)),
         );
-        panelHeight.setValue(newH);
       },
       onPanResponderRelease: (_, gs) => {
-        const projectedH = settledHeight.current - gs.dy;
-        // Fast swipe takes priority over position
-        if (gs.vy > 0.4 || (gs.dy > 50 && projectedH < EXPANDED_H)) {
-          animateTo(COLLAPSED_H, false);
-        } else if (gs.vy < -0.4 || gs.dy < -50) {
-          animateTo(EXPANDED_H, true);
+        const proj = settledHeight.current - gs.dy;
+        if (gs.vy > 0.5) {
+          // Swipe rápido para baixo — desce um nível
+          if (settledHeight.current >= FULL_H - 10) animateTo(EXPANDED_H, 'expanded');
+          else animateTo(COLLAPSED_H, 'collapsed');
+        } else if (gs.vy < -0.5) {
+          // Swipe rápido para cima — sobe um nível
+          if (settledHeight.current <= COLLAPSED_H + 10) animateTo(EXPANDED_H, 'expanded');
+          else animateTo(FULL_H, 'full');
         } else {
-          // Snap to nearest
-          const snap = projectedH > MIDPOINT ? EXPANDED_H : COLLAPSED_H;
-          animateTo(snap, snap === EXPANDED_H);
+          // Snap pelo posição projetada (3 pontos)
+          if (proj > MIDPOINT_HIGH) animateTo(FULL_H, 'full');
+          else if (proj > MIDPOINT_LOW) animateTo(EXPANDED_H, 'expanded');
+          else animateTo(COLLAPSED_H, 'collapsed');
         }
       },
       onPanResponderTerminate: (_, gs) => {
-        // Interrupted (e.g. scroll claimed the gesture) — snap back
-        const projectedH = settledHeight.current - gs.dy;
-        const snap = projectedH > MIDPOINT ? EXPANDED_H : COLLAPSED_H;
-        animateTo(snap, snap === EXPANDED_H);
+        const proj = settledHeight.current - gs.dy;
+        if (proj > MIDPOINT_HIGH) animateTo(FULL_H, 'full');
+        else if (proj > MIDPOINT_LOW) animateTo(EXPANDED_H, 'expanded');
+        else animateTo(COLLAPSED_H, 'collapsed');
       },
     }),
   ).current;
@@ -160,7 +164,7 @@ export default function UserDashboardScreen({ navigation }) {
         <View style={styles.handleRow} {...panResponder.panHandlers}>
           <View style={styles.panelHandle} />
           <Ionicons
-            name={panelExpanded ? 'chevron-down' : 'chevron-up'}
+            name={panelState === 'full' ? 'chevron-down' : 'chevron-up'}
             size={14}
             color="#9CA3AF"
             style={{ marginTop: 2 }}
@@ -226,7 +230,7 @@ export default function UserDashboardScreen({ navigation }) {
         </View>
 
         {/* Instructor list */}
-        {panelExpanded && (
+        {panelState !== 'collapsed' && (
           loading ? (
             <View style={styles.loadingState}>
               <ActivityIndicator color={PRIMARY} size="large" />
