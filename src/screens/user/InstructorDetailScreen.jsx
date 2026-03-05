@@ -23,6 +23,18 @@ const CLASS_TYPE_ICON = {
   'Misto':        'grid-outline',
 };
 
+const VEHICLE_TYPE_LABEL = {
+  manual:    'Manual',
+  automatic: 'Automático',
+  electric:  'Elétrico',
+};
+
+const VEHICLE_TYPE_ICON = {
+  manual:    'car-outline',
+  automatic: 'car-sport-outline',
+  electric:  'flash-outline',
+};
+
 
 function StarRow({ rating, size = 14, color = '#EAB308' }) {
   return (
@@ -244,7 +256,9 @@ export default function InstructorDetailScreen({ route, navigation }) {
             ) : (
               <>
                 <Ionicons name="car-outline" size={20} color="#2563EB" />
-                <Text style={styles.infoValue} numberOfLines={1}>{instructor.carModel || '—'}</Text>
+                <Text style={styles.infoValue} numberOfLines={1}>
+                  {[instructor.carModel, instructor.carYear].filter(Boolean).join(' ') || '—'}
+                </Text>
                 <Text style={styles.infoLabel}>veículo</Text>
               </>
             )}
@@ -256,6 +270,20 @@ export default function InstructorDetailScreen({ route, navigation }) {
             <Text style={styles.infoLabel}>avaliação</Text>
           </View>
         </View>
+
+        {/* Vehicle type badge */}
+        {instructor.vehicleType && (
+          <View style={styles.vehicleTypeBadge}>
+            <Ionicons
+              name={VEHICLE_TYPE_ICON[instructor.vehicleType] || 'car-outline'}
+              size={14}
+              color={PRIMARY}
+            />
+            <Text style={styles.vehicleTypeText}>
+              Câmbio {VEHICLE_TYPE_LABEL[instructor.vehicleType] || instructor.vehicleType}
+            </Text>
+          </View>
+        )}
 
         {/* Bio */}
         {instructor.bio && (
@@ -365,7 +393,7 @@ export default function InstructorDetailScreen({ route, navigation }) {
               <Text style={styles.carInfoText}>
                 {instructor.carOptions === 'student'
                   ? 'Aula realizada no seu próprio carro'
-                  : `Aula no veículo do instrutor${instructor.carModel ? ` (${instructor.carModel})` : ''}`}
+                  : `Aula no veículo do instrutor${instructor.carModel ? ` (${[instructor.carModel, instructor.carYear].filter(Boolean).join(' ')})` : ''}`}
               </Text>
             </View>
           )}
@@ -653,6 +681,14 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 14, fontWeight: '800', color: '#111827', textAlign: 'center' },
   infoLabel: { fontSize: 10, color: '#9CA3AF', fontWeight: '600' },
   infoDivider: { width: 1, height: 36, backgroundColor: '#E5E7EB' },
+  vehicleTypeBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    alignSelf: 'center', marginTop: 10, marginBottom: 2,
+    backgroundColor: '#EFF6FF', borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  vehicleTypeText: { fontSize: 12, fontWeight: '600', color: PRIMARY },
 
   section: {
     backgroundColor: '#FFF', marginHorizontal: 16, marginTop: 12, borderRadius: 16,

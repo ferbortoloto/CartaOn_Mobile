@@ -110,7 +110,9 @@ export default function RegisterScreen({ navigation }) {
   const [licenseCategory, setLicenseCategory] = useState('B');
   const [instructorRegNum, setInstructorRegNum] = useState('');
   const [carModel, setCarModel] = useState('');
+  const [carYear, setCarYear] = useState('');
   const [carOptions, setCarOptions] = useState('instructor');
+  const [vehicleType, setVehicleType] = useState('manual');
   const [pricePerHour, setPricePerHour] = useState('');
   const [bio, setBio] = useState('');
 
@@ -241,7 +243,9 @@ export default function RegisterScreen({ navigation }) {
         licenseCategory,
         instructorRegNum: instructorRegNum.trim(),
         carModel: carModel.trim(),
+        carYear: carYear.trim() ? parseInt(carYear.trim(), 10) : null,
         carOptions,
+        vehicleType,
         pricePerHour: parseFloat(pricePerHour) || 80,
         bio: bio.trim(),
       });
@@ -476,21 +480,64 @@ export default function RegisterScreen({ navigation }) {
                   </View>
 
                   {/* Veículo — opcional */}
-                  <Field label="Veículo (marca e modelo)" icon="car-outline" optional>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Ex: Honda Civic 2023"
-                      placeholderTextColor="#9CA3AF"
-                      value={carModel}
-                      onChangeText={setCarModel}
-                      autoCapitalize="words"
-                    />
-                  </Field>
+                  <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                      <Text style={styles.label}>Veículo</Text>
+                      <Text style={styles.optionalTag}>opcional</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <View style={[styles.inputWrapper, { flex: 3 }]}>
+                        <Ionicons name="car-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Marca e modelo"
+                          placeholderTextColor="#9CA3AF"
+                          value={carModel}
+                          onChangeText={setCarModel}
+                          autoCapitalize="words"
+                        />
+                      </View>
+                      <View style={[styles.inputWrapper, { flex: 2 }]}>
+                        <Ionicons name="calendar-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Ano"
+                          placeholderTextColor="#9CA3AF"
+                          value={carYear}
+                          onChangeText={setCarYear}
+                          keyboardType="number-pad"
+                          maxLength={4}
+                        />
+                      </View>
+                    </View>
+                  </View>
                   <View style={styles.infoBox}>
                     <Ionicons name="information-circle-outline" size={14} color="#1D4ED8" />
                     <Text style={styles.infoText}>
                       A nova legislação permite aulas no veículo do próprio aluno. O veículo é opcional.
                     </Text>
+                  </View>
+
+                  {/* Tipo de câmbio do veículo */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Tipo de câmbio do veículo</Text>
+                    <View style={styles.chipRow}>
+                      {[
+                        { value: 'manual',    label: 'Manual' },
+                        { value: 'automatic', label: 'Automático' },
+                        { value: 'electric',  label: 'Elétrico' },
+                      ].map(opt => (
+                        <TouchableOpacity
+                          key={opt.value}
+                          style={[styles.chip, vehicleType === opt.value && styles.chipActive]}
+                          onPress={() => setVehicleType(opt.value)}
+                        >
+                          <Text style={[styles.chipText, vehicleType === opt.value && styles.chipTextActive]}>
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
 
                   {/* Como serão feitas as aulas */}

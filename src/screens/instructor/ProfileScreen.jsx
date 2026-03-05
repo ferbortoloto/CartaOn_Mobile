@@ -13,6 +13,11 @@ import { logger } from '../../utils/logger';
 
 const PRIMARY = '#1D4ED8';
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
+const VEHICLE_TYPE_OPTIONS = [
+  { value: 'manual',    label: 'Manual' },
+  { value: 'automatic', label: 'Automático' },
+  { value: 'electric',  label: 'Elétrico' },
+];
 
 const PRICE_MIN = 40;
 const PRICE_MAX = 180;
@@ -62,6 +67,8 @@ export default function ProfileScreen({ route }) {
     name: user?.name || '',
     phone: user?.phone || '',
     carModel: user?.car_model || '',
+    carYear: user?.car_year ? String(user.car_year) : '',
+    vehicleType: user?.vehicle_type || 'manual',
     licenseCategory: user?.license_category || '',
     pricePerHour: String(user?.price_per_hour || ''),
     classDuration: user?.class_duration || 60,
@@ -75,6 +82,8 @@ export default function ProfileScreen({ route }) {
       await updateProfile({
         phone: formData.phone,
         car_model: formData.carModel,
+        car_year: formData.carYear ? parseInt(formData.carYear, 10) : null,
+        vehicle_type: formData.vehicleType,
         license_category: formData.licenseCategory,
         price_per_hour: parseFloat(formData.pricePerHour) || 0,
         class_duration: formData.classDuration,
@@ -178,10 +187,64 @@ export default function ProfileScreen({ route }) {
           onLayout={(e) => { profSectionY.current = e.nativeEvent.layout.y; }}
         >
           <Text style={styles.sectionTitle}>Informações Profissionais</Text>
-          <InfoRow
-            icon="car-outline" label="Veículo" value={formData.carModel}
-            editing={isEditing} onChangeText={(v) => setFormData(p => ({ ...p, carModel: v }))}
-          />
+          {/* Veículo + Ano */}
+          <View style={styles.infoRow}>
+            <Ionicons name="car-outline" size={18} color="#9CA3AF" style={styles.infoIcon} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Veículo</Text>
+              {isEditing ? (
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+                  <TextInput
+                    style={[styles.infoInput, { flex: 3 }]}
+                    value={formData.carModel}
+                    onChangeText={(v) => setFormData(p => ({ ...p, carModel: v }))}
+                    placeholder="Marca e modelo"
+                    placeholderTextColor="#D1D5DB"
+                    autoCapitalize="words"
+                  />
+                  <TextInput
+                    style={[styles.infoInput, { flex: 2 }]}
+                    value={formData.carYear}
+                    onChangeText={(v) => setFormData(p => ({ ...p, carYear: v }))}
+                    placeholder="Ano"
+                    placeholderTextColor="#D1D5DB"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                  />
+                </View>
+              ) : (
+                <Text style={styles.infoValue}>
+                  {[formData.carModel, formData.carYear].filter(Boolean).join(' ') || '—'}
+                </Text>
+              )}
+            </View>
+          </View>
+          {/* Tipo de câmbio */}
+          <View style={styles.infoRow}>
+            <Ionicons name="settings-outline" size={18} color="#9CA3AF" style={styles.infoIcon} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Tipo de Câmbio</Text>
+              {isEditing ? (
+                <View style={styles.durationRow}>
+                  {VEHICLE_TYPE_OPTIONS.map(opt => (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[styles.durationPill, formData.vehicleType === opt.value && styles.durationPillActive]}
+                      onPress={() => setFormData(p => ({ ...p, vehicleType: opt.value }))}
+                    >
+                      <Text style={[styles.durationPillText, formData.vehicleType === opt.value && styles.durationPillTextActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.infoValue}>
+                  {VEHICLE_TYPE_OPTIONS.find(o => o.value === formData.vehicleType)?.label || 'Manual'}
+                </Text>
+              )}
+            </View>
+          </View>
           <InfoRow
             icon="document-text-outline" label="Categoria CNH" value={formData.licenseCategory}
             editing={isEditing} onChangeText={(v) => setFormData(p => ({ ...p, licenseCategory: v }))}

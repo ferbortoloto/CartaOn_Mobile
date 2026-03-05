@@ -21,13 +21,22 @@ export default function InstructorCard({ instructor, onPress }) {
           )}
         </View>
 
-        {/* Car + Category */}
+        {/* Car + Category + Vehicle Type */}
         <View style={styles.detailRow}>
           <Ionicons name="car-outline" size={12} color="#9CA3AF" />
-          <Text style={styles.detailText} numberOfLines={1}>{instructor.carModel}</Text>
+          <Text style={styles.detailText} numberOfLines={1}>
+            {[instructor.carModel, instructor.carYear].filter(Boolean).join(' ') || '—'}
+          </Text>
           <View style={[styles.catBadge, { backgroundColor: `${catColor}20` }]}>
             <Text style={[styles.catText, { color: catColor }]}>Cat. {instructor.licenseCategory}</Text>
           </View>
+          {instructor.vehicleType && instructor.vehicleType !== 'manual' && (
+            <View style={styles.vehicleTypeBadge}>
+              <Text style={styles.vehicleTypeText}>
+                {instructor.vehicleType === 'automatic' ? 'Auto' : 'Elét.'}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Location */}
@@ -74,6 +83,8 @@ const styles = StyleSheet.create({
   detailText: { fontSize: 12, color: '#6B7280', flex: 1 },
   catBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   catText: { fontSize: 10, fontWeight: '700' },
+  vehicleTypeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: '#EFF6FF' },
+  vehicleTypeText: { fontSize: 10, fontWeight: '700', color: '#1D4ED8' },
   bottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   ratingText: { fontSize: 13, fontWeight: '700', color: '#374151' },

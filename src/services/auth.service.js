@@ -28,7 +28,7 @@ function parseISODate(ddmmyyyy) {
 export async function signUp(formData) {
   const {
     name, email, password, phone, cpf, birthdate, role, photoUri,
-    licenseCategory, instructorRegNum, carModel, carOptions, pricePerHour, bio,
+    licenseCategory, instructorRegNum, carModel, carYear, carOptions, vehicleType, pricePerHour, bio,
   } = formData;
 
   // Apenas dados não-sensíveis no metadata (serão exibidos no JWT).
@@ -55,7 +55,9 @@ export async function signUp(formData) {
       p_license_category:   licenseCategory,
       p_instructor_reg_num: instructorRegNum,
       p_car_model:          carModel || null,
+      p_car_year:           carYear || null,
       p_car_options:        carOptions,
+      p_vehicle_type:       vehicleType || 'manual',
       p_price_per_hour:     parseFloat(pricePerHour) || 80,
       p_bio:                bio,
     } : {}),
