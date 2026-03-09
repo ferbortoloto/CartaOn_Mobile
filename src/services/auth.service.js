@@ -29,6 +29,7 @@ export async function signUp(formData) {
   const {
     name, email, password, phone, cpf, birthdate, role, photoUri,
     licenseCategory, instructorRegNum, carModel, carYear, carOptions, vehicleType, pricePerHour, bio,
+    hasCar,
   } = formData;
 
   // Apenas dados não-sensíveis no metadata (serão exibidos no JWT).
@@ -60,7 +61,11 @@ export async function signUp(formData) {
       p_vehicle_type:       vehicleType || 'manual',
       p_price_per_hour:     parseFloat(pricePerHour) || 80,
       p_bio:                bio,
-    } : {}),
+    } : {
+      p_has_car:   hasCar ?? false,
+      p_car_model: hasCar ? (carModel || null) : null,
+      p_car_year:  hasCar ? (carYear || null) : null,
+    }),
   });
   if (rpcError) throw rpcError;
 

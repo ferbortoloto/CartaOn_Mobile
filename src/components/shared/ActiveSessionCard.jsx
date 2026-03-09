@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 const SUCCESS = '#16A34A';
@@ -120,11 +121,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 12,
     borderWidth: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 6,
+    ...makeShadow('#000', 4, 0.1, 10, 6),
   },
   cardActive: {
     backgroundColor: '#EFF6FF',

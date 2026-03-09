@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, Alert, Modal,
+  TextInput, Alert, Modal, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSchedule } from '../../context/ScheduleContext';
 import { geocodeAddress } from '../../utils/geocoding';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 
@@ -27,6 +28,9 @@ export default function UserProfileScreen() {
   const [phone, setPhone] = useState(user?.phone || '(11) 98765-4321');
   const [goal, setGoal] = useState(user?.goal || 'Categoria B');
   const [address, setAddress] = useState(user?.address || '');
+  const [hasCar, setHasCar] = useState(user?.has_car ?? false);
+  const [carModel, setCarModel] = useState(user?.car_model || '');
+  const [carYear, setCarYear] = useState(user?.car_year ? String(user.car_year) : '');
 
   const classEvents = useMemo(() =>
     events.filter(e => e.type === 'class' || e.type === 'CLASS'),
@@ -62,7 +66,12 @@ export default function UserProfileScreen() {
         // geocoding falhou — salva sem coordenadas
       }
     }
-    await updateProfile({ name, phone, goal, address, coordinates });
+    await updateProfile({
+      name, phone, goal, address, coordinates,
+      has_car: hasCar,
+      car_model: hasCar ? (carModel.trim() || null) : null,
+      car_year: hasCar && carYear.trim() ? parseInt(carYear.trim(), 10) : null,
+    });
     setEditing(false);
     Alert.alert('Perfil atualizado!', 'Suas informações foram salvas com sucesso.');
   };
@@ -83,7 +92,8 @@ export default function UserProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Avatar + name */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarCircle}>
@@ -162,6 +172,87 @@ export default function UserProfileScreen() {
           />
         </View>
 
+        {/* Vehicle */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Veículo</Text>
+
+          <View style={styles.infoField}>
+            <View style={styles.infoFieldLabel}>
+              <Ionicons name="car-outline" size={14} color="#9CA3AF" />
+              <Text style={styles.infoFieldLabelText}>Possui carro próprio?</Text>
+            </View>
+            {editing ? (
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                {[{ value: false, label: 'Não' }, { value: true, label: 'Sim' }].map(opt => (
+                  <TouchableOpacity
+                    key={String(opt.value)}
+                    onPress={() => setHasCar(opt.value)}
+                    style={{
+                      paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20,
+                      borderWidth: 1.5,
+                      borderColor: hasCar === opt.value ? PRIMARY : '#E5E7EB',
+                      backgroundColor: hasCar === opt.value ? PRIMARY : '#F9FAFB',
+                    }}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: hasCar === opt.value ? '#FFF' : '#374151' }}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.infoFieldValue}>{hasCar ? 'Sim' : 'Não'}</Text>
+            )}
+          </View>
+
+          {(hasCar || (!editing && (carModel || carYear))) && (
+            <>
+              <View style={styles.infoField}>
+                <View style={styles.infoFieldLabel}>
+                  <Ionicons name="car-sport-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.infoFieldLabelText}>Marca e modelo</Text>
+                </View>
+                {editing ? (
+                  <TextInput
+                    style={styles.infoFieldInput}
+                    value={carModel}
+                    onChangeText={setCarModel}
+                    autoCapitalize="words"
+                    placeholder="Ex: Honda Civic"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                ) : (
+                  <Text style={[styles.infoFieldValue, !carModel && { color: '#9CA3AF', fontStyle: 'italic' }]}>
+                    {carModel || 'Não informado'}
+                  </Text>
+                )}
+              </View>
+
+              <View style={[styles.infoField, { borderBottomWidth: 0 }]}>
+                <View style={styles.infoFieldLabel}>
+                  <Ionicons name="calendar-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.infoFieldLabelText}>Ano</Text>
+                </View>
+                {editing ? (
+                  <TextInput
+                    style={styles.infoFieldInput}
+                    value={carYear}
+                    onChangeText={setCarYear}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    placeholder="Ex: 2022"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                ) : (
+                  <Text style={[styles.infoFieldValue, !carYear && { color: '#9CA3AF', fontStyle: 'italic' }]}>
+                    {carYear || 'Não informado'}
+                  </Text>
+                )}
+              </View>
+            </>
+          )}
+        </View>
+
         {/* Recent classes */}
         {recentClasses.length > 0 && (
           <View style={styles.section}>
@@ -195,6 +286,7 @@ export default function UserProfileScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal de confirmação de logout */}
       <Modal
@@ -286,7 +378,7 @@ const styles = StyleSheet.create({
     width: 88, height: 88, borderRadius: 44,
     backgroundColor: PRIMARY, alignItems: 'center', justifyContent: 'center',
     marginBottom: 12,
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 6,
+    ...makeShadow(PRIMARY, 4, 0.25, 10, 6),
   },
   avatarLetter: { fontSize: 36, fontWeight: '800', color: '#FFF' },
   avatarName: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 6 },
@@ -303,7 +395,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFF', marginHorizontal: 16, marginTop: 14, borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '800', color: PRIMARY },
@@ -312,7 +404,7 @@ const styles = StyleSheet.create({
 
   section: {
     backgroundColor: '#FFF', marginHorizontal: 16, marginTop: 14, borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 12 },
 
@@ -351,7 +443,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16, marginTop: 14,
     backgroundColor: '#FFF', borderRadius: 14, paddingVertical: 14,
     borderWidth: 1.5, borderColor: '#FCA5A5',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    ...makeShadow('#000', 1, 0.05, 4, 2),
   },
   logoutText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
 
@@ -362,8 +454,7 @@ const styles = StyleSheet.create({
   modalBox: {
     backgroundColor: '#FFF', borderRadius: 20, padding: 28,
     marginHorizontal: 32, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+    ...makeShadow('#000', 8, 0.15, 20, 10),
   },
   modalIconWrap: {
     width: 60, height: 60, borderRadius: 30,

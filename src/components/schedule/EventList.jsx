@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { makeShadow } from '../../constants/theme';
 import { useSchedule } from '../../context/ScheduleContext';
 import { getEventColor } from '../../data/scheduleData';
 import { estimateTravelTime, checkGap, formatTravelTime } from '../../utils/travelTime';
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 14, paddingBottom: 32 },
   eventCard: {
     flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4,
+    ...makeShadow('#000', 2, 0.08, 8, 4),
   },
   eventColorBar: { width: 6 },
   eventBody: { flex: 1, padding: 16 },

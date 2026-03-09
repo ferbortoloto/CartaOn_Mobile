@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { makeShadow } from '../../constants/theme';
 import { useSchedule } from '../../context/ScheduleContext';
 import { getEventColor } from '../../data/scheduleData';
 
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   eventItem: {
     flexDirection: 'row', alignItems: 'stretch', backgroundColor: '#FFF',
     borderRadius: 12, marginBottom: 10, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    ...makeShadow('#000', 1, 0.06, 4, 2),
   },
   eventBar: { width: 4, minHeight: 56 },
   eventContent: { flex: 1, padding: 12 },

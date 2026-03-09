@@ -12,6 +12,7 @@ import InstructorCard from '../../components/user/InstructorCard';
 import LeafletMapView from '../../components/shared/LeafletMapView';
 import Avatar from '../../components/shared/Avatar';
 import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 const MAP_CENTER = { lat: -23.5700, lng: -46.6600 };
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
   headerCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 18, margin: 12, padding: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 8,
+    ...makeShadow('#000', 4, 0.12, 10, 8),
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   headerInfo: { flex: 1 },
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
     backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 12,
+    ...makeShadow('#000', -4, 0.1, 12, 12),
   },
   handleRow: {
     alignItems: 'center', paddingTop: 10, paddingBottom: 4, cursor: 'grab',

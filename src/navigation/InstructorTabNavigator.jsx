@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { makeShadow } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChat } from '../context/ChatContext';
 import DashboardScreen from '../screens/instructor/DashboardScreen';
 import ScheduleScreen from '../screens/instructor/ScheduleScreen';
@@ -25,6 +27,7 @@ const TABS = [
 function CustomTabBar({ state, navigation }) {
   const { getTotalUnreadCount } = useChat();
   const unreadCount = getTotalUnreadCount();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={{
@@ -34,13 +37,9 @@ function CustomTabBar({ state, navigation }) {
       borderTopColor: '#F0F0F0',
       paddingHorizontal: 4,
       paddingTop: 8,
-      paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+      paddingBottom: Math.max(insets.bottom, 10),
       alignItems: 'center',
-      elevation: 8,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
+      ...makeShadow('#000', -2, 0.06, 8, 8),
     }}>
       {state.routes.map((route, index) => {
         const tab = TABS[index];

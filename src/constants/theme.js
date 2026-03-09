@@ -1,6 +1,23 @@
 // Abily — Design System (tema "Estrada")
 // Paleta automotiva: azul marinho profissional
 
+import { Platform } from 'react-native';
+
+// Returns cross-platform shadow styles (shadowColor/etc on native, boxShadow on web)
+const toRgb = (hex) => {
+  if (hex === '#000' || hex === '#000000') return '0,0,0';
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+};
+export const makeShadow = (color = '#000', offsetY = 2, opacity = 0.08, radius = 6, elevation = 3) =>
+  Platform.select({
+    web: { boxShadow: `0 ${offsetY}px ${radius}px rgba(${toRgb(color)},${opacity})` },
+    default: { shadowColor: color, shadowOffset: { width: 0, height: offsetY }, shadowOpacity: opacity, shadowRadius: radius, elevation },
+  });
+
 export const COLORS = {
   // Primary — Azul marinho premium
   primary: '#1D4ED8',
@@ -37,34 +54,10 @@ export const COLORS = {
 };
 
 export const SHADOWS = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  primaryGlow: {
-    shadowColor: '#1D4ED8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
+  sm: makeShadow('#000', 1, 0.05, 3, 2),
+  md: makeShadow('#000', 2, 0.08, 6, 3),
+  lg: makeShadow('#000', 4, 0.12, 12, 6),
+  primaryGlow: makeShadow('#1D4ED8', 4, 0.3, 8, 6),
 };
 
 export const RADIUS = {

@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { mapAuthError } from '../../utils/authErrors';
+import { makeShadow } from '../../constants/theme';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -186,16 +187,14 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 84, height: 84, borderRadius: 42,
     backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25, shadowRadius: 12, elevation: 10, marginBottom: 16,
+    ...makeShadow('#000', 6, 0.25, 12, 10), marginBottom: 16,
   },
   brandName: { fontSize: 34, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
   brandSub: { fontSize: 14, color: 'rgba(255,255,255,0.65)', marginTop: 6, letterSpacing: 0.2 },
 
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2, shadowRadius: 20, elevation: 12,
+    ...makeShadow('#000', 12, 0.2, 20, 12),
   },
   cardTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
   cardSub: { fontSize: 14, color: '#64748B', marginBottom: 24 },
@@ -227,8 +226,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: '#1D4ED8', borderRadius: 14, height: 52,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 8, elevation: 6,
+    ...makeShadow('#1D4ED8', 4, 0.35, 8, 6),
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },

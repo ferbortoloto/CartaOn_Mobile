@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../hooks/useAuth';
 import { mapAuthError } from '../../utils/authErrors';
+import { makeShadow } from '../../constants/theme';
 
 const CATEGORY_OPTIONS = ['A', 'B', 'A+B'];
 
@@ -28,6 +29,20 @@ function formatCPF(value) {
   if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
   if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+function formatBRL(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 9); // max 9.999.999,99
+  const num = parseInt(digits || '0', 10);
+  const reais = Math.floor(num / 100);
+  const centavos = num % 100;
+  const formatted = reais.toLocaleString('pt-BR') + ',' + String(centavos).padStart(2, '0');
+  return formatted;
+}
+
+function parseBRL(value) {
+  const digits = value.replace(/\D/g, '');
+  return parseInt(digits || '0', 10) / 100;
 }
 
 function isValidCPF(value) {
@@ -111,6 +126,7 @@ export default function RegisterScreen({ navigation }) {
   const [instructorRegNum, setInstructorRegNum] = useState('');
   const [carModel, setCarModel] = useState('');
   const [carYear, setCarYear] = useState('');
+  const [hasCar, setHasCar] = useState(false);
   const [carOptions, setCarOptions] = useState('instructor');
   const [vehicleType, setVehicleType] = useState('manual');
   const [pricePerHour, setPricePerHour] = useState('');
@@ -215,8 +231,8 @@ export default function RegisterScreen({ navigation }) {
     if (role === 'instructor') {
       if (!instructorRegNum.trim())
         errs.instructorRegNum = 'Informe o número de registro.';
-      if (!pricePerHour.trim() || isNaN(parseFloat(pricePerHour)))
-        errs.pricePerHour = 'Informe um valor válido (ex: 80).';
+      if (!pricePerHour.trim() || parseBRL(pricePerHour) <= 0)
+        errs.pricePerHour = 'Informe um valor válido (ex: 80,00).';
     }
     return errs;
   };
@@ -246,8 +262,9 @@ export default function RegisterScreen({ navigation }) {
         carYear: carYear.trim() ? parseInt(carYear.trim(), 10) : null,
         carOptions,
         vehicleType,
-        pricePerHour: parseFloat(pricePerHour) || 80,
+        pricePerHour: parseBRL(pricePerHour) || 80,
         bio: bio.trim(),
+        hasCar,
       });
       if (result.emailConfirmationRequired) {
         navigation.navigate('VerifyOTP', { email: trimmedEmail });
@@ -463,7 +480,7 @@ export default function RegisterScreen({ navigation }) {
 
                   {/* Categoria */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Categoria da habilitação</Text>
+                    <Text style={[styles.label, { marginBottom: 12 }]}>Categoria da habilitação</Text>
                     <View style={styles.chipRow}>
                       {CATEGORY_OPTIONS.map((opt) => (
                         <TouchableOpacity
@@ -520,7 +537,7 @@ export default function RegisterScreen({ navigation }) {
 
                   {/* Tipo de câmbio do veículo */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Tipo de câmbio do veículo</Text>
+                    <Text style={[styles.label, { marginBottom: 12 }]}>Tipo de câmbio do veículo</Text>
                     <View style={styles.chipRow}>
                       {[
                         { value: 'manual',    label: 'Manual' },
@@ -542,7 +559,7 @@ export default function RegisterScreen({ navigation }) {
 
                   {/* Como serão feitas as aulas */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Como serão realizadas as aulas?</Text>
+                    <Text style={[styles.label, { marginBottom: 12 }]}>Como serão realizadas as aulas?</Text>
                     <View style={styles.chipRow}>
                       {[
                         { value: 'instructor', label: 'Meu carro' },
@@ -570,9 +587,9 @@ export default function RegisterScreen({ navigation }) {
                       placeholder="0,00"
                       placeholderTextColor="#9CA3AF"
                       value={pricePerHour}
-                      onChangeText={(v) => { setPricePerHour(v); clearErr('pricePerHour'); }}
+                      onChangeText={(v) => { setPricePerHour(formatBRL(v)); clearErr('pricePerHour'); }}
                       onBlur={() => blurField('pricePerHour')}
-                      keyboardType="decimal-pad"
+                      keyboardType="numeric"
                     />
                   </Field>
 
@@ -594,6 +611,63 @@ export default function RegisterScreen({ navigation }) {
                     </View>
                     <Text style={styles.charCount}>{bio.length}/300</Text>
                   </View>
+                </>
+              )}
+
+              {/* ── Veículo (aluno) ── */}
+              {role === 'user' && (
+                <>
+                  <SectionHeader icon="car-outline" title="Veículo" />
+
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.label, { marginBottom: 12 }]}>Possui carro próprio?</Text>
+                    <View style={styles.chipRow}>
+                      {[
+                        { value: false, label: 'Não' },
+                        { value: true,  label: 'Sim' },
+                      ].map(opt => (
+                        <TouchableOpacity
+                          key={String(opt.value)}
+                          style={[styles.chip, hasCar === opt.value && styles.chipActive]}
+                          onPress={() => setHasCar(opt.value)}
+                        >
+                          <Text style={[styles.chipText, hasCar === opt.value && styles.chipTextActive]}>
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  {hasCar && (
+                    <View style={styles.inputGroup}>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <View style={[styles.inputWrapper, { flex: 3 }]}>
+                          <Ionicons name="car-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                          <TextInput
+                            style={styles.input}
+                            placeholder="Marca e modelo"
+                            placeholderTextColor="#9CA3AF"
+                            value={carModel}
+                            onChangeText={setCarModel}
+                            autoCapitalize="words"
+                          />
+                        </View>
+                        <View style={[styles.inputWrapper, { flex: 2 }]}>
+                          <Ionicons name="calendar-outline" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                          <TextInput
+                            style={styles.input}
+                            placeholder="Ano"
+                            placeholderTextColor="#9CA3AF"
+                            value={carYear}
+                            onChangeText={setCarYear}
+                            keyboardType="number-pad"
+                            maxLength={4}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  )}
                 </>
               )}
 
@@ -648,16 +722,14 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 64, height: 64, borderRadius: 32,
     backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 8, elevation: 8, marginBottom: 8,
+    ...makeShadow('#000', 4, 0.2, 8, 8), marginBottom: 8,
   },
   brandName: { fontSize: 26, fontWeight: '800', color: '#FFF', letterSpacing: 1 },
   brandSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 
   card: {
     backgroundColor: '#FFF', borderRadius: 24, padding: 24,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15, shadowRadius: 16, elevation: 10,
+    ...makeShadow('#000', 8, 0.15, 16, 10),
   },
   cardTitle: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 14 },
 
@@ -711,8 +783,8 @@ const styles = StyleSheet.create({
 
   // Inputs
   inputGroup: { marginBottom: 18 },
-  labelRow: { flexDirection: 'row', alignItems: 'center' },
-  label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  label: { fontSize: 13, fontWeight: '600', color: '#374151' },
   optionalTag: {
     marginLeft: 6, fontSize: 11, color: '#9CA3AF',
     backgroundColor: '#F3F4F6', borderRadius: 4,
@@ -764,8 +836,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: '#1D4ED8', borderRadius: 14, height: 52, marginTop: 8,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    ...makeShadow('#1D4ED8', 4, 0.3, 8, 6),
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },

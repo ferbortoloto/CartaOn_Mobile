@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useChat } from '../../context/ChatContext';
 import { formatMessageTime, formatTimeSeparator } from '../../lib/utils';
 import Avatar from '../../components/shared/Avatar';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 
@@ -331,8 +332,7 @@ const styles = StyleSheet.create({
   sendBtn: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: PRIMARY, alignItems: 'center', justifyContent: 'center',
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
+    ...makeShadow(PRIMARY, 2, 0.3, 4, 4),
   },
-  sendBtnDisabled: { opacity: 0.4, shadowOpacity: 0 },
+  sendBtnDisabled: { opacity: 0.4 },
 });

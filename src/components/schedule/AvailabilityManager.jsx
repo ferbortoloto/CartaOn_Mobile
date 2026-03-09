@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
+import { makeShadow } from '../../constants/theme';
 import { getAvailability, saveAvailability } from '../../services/events.service';
 import { logger } from '../../utils/logger';
 import {
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFF', marginHorizontal: 16, borderRadius: 12,
     padding: 12, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    ...makeShadow('#000', 1, 0.06, 4, 2),
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 18, fontWeight: '800', color: PRIMARY },
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   saveBtn: {
     backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 16,
     alignItems: 'center', marginBottom: 24, marginTop: 8,
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    ...makeShadow('#1D4ED8', 4, 0.3, 8, 6),
   },
   saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
 });

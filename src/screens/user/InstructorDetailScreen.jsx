@@ -14,6 +14,7 @@ import { getReviews, createReview } from '../../services/instructors.service';
 import { logger } from '../../utils/logger';
 import { MeetingPointType } from '../../data/scheduleData';
 import { geocodeAddress } from '../../utils/geocoding';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 
@@ -675,7 +676,7 @@ const styles = StyleSheet.create({
   infoGrid: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFF', marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   infoItem: { flex: 1, alignItems: 'center', gap: 3 },
   infoValue: { fontSize: 14, fontWeight: '800', color: '#111827', textAlign: 'center' },
@@ -693,7 +694,7 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: '#FFF', marginHorizontal: 16, marginTop: 12, borderRadius: 16,
     padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 4 },
   sectionSub: { fontSize: 12, color: '#9CA3AF', marginBottom: 12 },
@@ -725,7 +726,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#1D4ED8', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 10,
-    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+    ...makeShadow('#1D4ED8', 3, 0.25, 6, 4),
   },
   planContractBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
 
@@ -800,7 +801,7 @@ const styles = StyleSheet.create({
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 14,
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 6,
+    ...makeShadow(PRIMARY, 4, 0.25, 8, 6),
   },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
 
@@ -824,7 +825,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingVertical: 14,
     paddingBottom: Platform.OS === 'ios' ? 14 : 14,
     backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 8,
+    ...makeShadow('#000', -2, 0.06, 8, 8),
   },
   footerInfo: { flex: 1 },
   footerPrice: { fontSize: 20, fontWeight: '800', color: PRIMARY },
@@ -833,9 +834,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: PRIMARY, borderRadius: 14,
     paddingHorizontal: 20, paddingVertical: 14,
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    ...makeShadow(PRIMARY, 4, 0.3, 8, 6),
   },
-  scheduleBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
+  scheduleBtnDisabled: { opacity: 0.5 },
   scheduleBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
   footerPaused: { gap: 10, justifyContent: 'center' },
   footerPausedText: { flex: 1, fontSize: 13, color: '#6B7280', lineHeight: 18 },

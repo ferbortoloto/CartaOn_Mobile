@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, FlatList,
   TextInput, Alert,
 } from 'react-native';
+import { makeShadow } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSchedule } from '../../context/ScheduleContext';
 import ContactModal from './ContactModal';
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   contactCard: {
     flexDirection: 'row', alignItems: 'flex-start',
     backgroundColor: '#FFF', borderRadius: 16, padding: 16, gap: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.08, 6, 3),
   },
   avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { fontSize: 20, fontWeight: '800' },

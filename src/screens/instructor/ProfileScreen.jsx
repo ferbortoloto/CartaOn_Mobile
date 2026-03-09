@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Alert, Modal, PanResponder, Switch,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +11,7 @@ import { usePlans } from '../../context/PlansContext';
 import Avatar from '../../components/shared/Avatar';
 import { getReviews } from '../../services/instructors.service';
 import { logger } from '../../utils/logger';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
@@ -129,7 +131,11 @@ export default function ProfileScreen({ route }) {
         </View>
       </View>
 
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Avatar + Info */}
         <View style={styles.avatarCard}>
           <View style={styles.avatarWrapper}>
@@ -342,6 +348,7 @@ export default function ProfileScreen({ route }) {
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal de confirmação de logout */}
       <Modal
@@ -579,7 +586,7 @@ const ps = StyleSheet.create({
     width: THUMB_R * 2, height: THUMB_R * 2, borderRadius: THUMB_R,
     backgroundColor: '#FFF', borderWidth: 2.5,
     marginLeft: -THUMB_R,
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 4,
+    ...makeShadow('#000', 2, 0.25, 4, 4),
   },
 
   // Labels dos tiers
@@ -615,7 +622,7 @@ const styles = StyleSheet.create({
   avatarCard: {
     backgroundColor: '#FFF', borderRadius: 20, padding: 24,
     alignItems: 'center', marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 4,
+    ...makeShadow('#000', 2, 0.06, 8, 4),
   },
   avatarWrapper: { position: 'relative', marginBottom: 12 },
   avatarBorder: { borderWidth: 3, borderColor: PRIMARY },
@@ -648,7 +655,7 @@ const styles = StyleSheet.create({
   activeToggleSub: { fontSize: 11, color: '#6B7280', marginTop: 1, flexShrink: 1 },
   section: {
     backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 14 },
@@ -702,8 +709,7 @@ const styles = StyleSheet.create({
   modalBox: {
     backgroundColor: '#FFF', borderRadius: 20, padding: 28,
     marginHorizontal: 32, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+    ...makeShadow('#000', 8, 0.15, 20, 10),
   },
   modalIconWrap: {
     width: 60, height: 60, borderRadius: 30,

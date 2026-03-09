@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { makeShadow } from '../../constants/theme';
 
 const RESEND_COOLDOWN = 60;
 
@@ -207,8 +208,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFF', borderRadius: 24, padding: 28,
     alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15, shadowRadius: 16, elevation: 10,
+    ...makeShadow('#000', 8, 0.15, 16, 10),
   },
 
   iconBox: {
@@ -237,8 +237,7 @@ const styles = StyleSheet.create({
   btn: {
     width: '100%', backgroundColor: '#1D4ED8', borderRadius: 14, height: 52, marginTop: 20,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    ...makeShadow('#1D4ED8', 4, 0.3, 8, 6),
   },
   btnDisabled: { opacity: 0.5 },
   btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },

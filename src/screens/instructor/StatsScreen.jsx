@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useSchedule } from '../../context/ScheduleContext';
 import { getReviews } from '../../services/instructors.service';
+import { makeShadow } from '../../constants/theme';
 import { logger } from '../../utils/logger';
 
 const PRIMARY = '#1D4ED8';
@@ -179,8 +180,7 @@ const styles = StyleSheet.create({
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   kpiCard: {
     flex: 1, minWidth: '45%', backgroundColor: '#FFF', borderRadius: 16,
-    padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    padding: 14, ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   kpiTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
   kpiIconBox: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   kpiTitle: { fontSize: 12, color: '#6B7280' },
   section: {
     backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+    ...makeShadow('#000', 2, 0.06, 6, 3),
   },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },

@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlans } from '../../context/PlansContext';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#1D4ED8';
 
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
   summaryCard: {
     backgroundColor: '#FFF', margin: 16, borderRadius: 18,
     padding: 16, gap: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4,
+    ...makeShadow('#000', 2, 0.07, 8, 4),
   },
   summaryTop: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   planIconBox: {
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
   orderCard: {
     backgroundColor: '#FFF', marginHorizontal: 16, marginTop: 8, borderRadius: 14,
     padding: 16, gap: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    ...makeShadow('#000', 1, 0.05, 4, 2),
   },
   orderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   orderLabel: { fontSize: 13, color: '#6B7280' },
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 14,
     backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 8,
+    ...makeShadow('#000', -2, 0.06, 8, 8),
   },
   footerInfo: { flex: 1 },
   footerTotal: { fontSize: 22, fontWeight: '800', color: PRIMARY },
@@ -308,9 +309,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: PRIMARY, borderRadius: 14,
     paddingHorizontal: 20, paddingVertical: 14,
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    ...makeShadow(PRIMARY, 4, 0.3, 8, 6),
   },
-  confirmBtnLoading: { opacity: 0.6, shadowOpacity: 0 },
+  confirmBtnLoading: { opacity: 0.6 },
   confirmBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
 
   successOverlay: {
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
   successCard: {
     backgroundColor: '#FFF', borderRadius: 24, padding: 32,
     alignItems: 'center', gap: 16, width: '100%',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 12,
+    ...makeShadow('#000', 8, 0.15, 20, 12),
   },
   successIconWrap: { marginBottom: 4 },
   successTitle: { fontSize: 22, fontWeight: '800', color: '#111827', textAlign: 'center' },

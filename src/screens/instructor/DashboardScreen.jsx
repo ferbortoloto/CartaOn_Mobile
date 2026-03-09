@@ -14,6 +14,7 @@ import LeafletMapView from '../../components/shared/LeafletMapView';
 import ActiveSessionCard from '../../components/shared/ActiveSessionCard';
 import Avatar from '../../components/shared/Avatar';
 import { formatTravelTime } from '../../utils/travelTime';
+import { makeShadow } from '../../constants/theme';
 import { MeetingPointType } from '../../data/scheduleData';
 
 const PRIMARY = '#1D4ED8';
@@ -906,7 +907,7 @@ const styles = StyleSheet.create({
   headerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   headerCard: {
     backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, margin: 12, padding: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 6,
+    ...makeShadow('#000', 3, 0.1, 8, 6),
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -928,7 +929,7 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
     backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 10,
+    ...makeShadow('#000', -3, 0.08, 10, 10),
   },
   handleRow: { alignItems: 'center', paddingTop: 10, paddingBottom: 2, cursor: 'grab' },
   panelHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB' },
@@ -963,7 +964,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', backgroundColor: '#FFF',
     borderRadius: 16, overflow: 'hidden',
     borderWidth: 1, borderColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    ...makeShadow('#000', 1, 0.05, 4, 2),
   },
   reqCardConflict: { borderColor: '#FECACA' },
   reqAccent: { width: 4, backgroundColor: '#F59E0B' },
@@ -1010,7 +1011,7 @@ const styles = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 5, borderRadius: 10, paddingVertical: 7,
   },
-  tabBtnActive: { backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
+  tabBtnActive: { backgroundColor: '#FFF', ...makeShadow('#000', 1, 0.08, 3, 2) },
   tabBtnText: { fontSize: 12, fontWeight: '600', color: '#9CA3AF' },
   tabBtnTextActive: { color: PRIMARY, fontWeight: '700' },
   tabBadge: { backgroundColor: '#FEF3C7', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
@@ -1032,7 +1033,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFF', borderRadius: 14,
     borderWidth: 1, borderColor: '#F3F4F6', padding: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+    ...makeShadow('#000', 1, 0.04, 4, 1),
     gap: 10,
   },
   planCardInactive: { backgroundColor: '#FAFAFA', opacity: 0.7 },
@@ -1165,7 +1166,7 @@ const styles = StyleSheet.create({
   },
   startModalCard: {
     backgroundColor: '#FFF', borderRadius: 24, padding: 24, width: '100%', maxWidth: 360,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 12,
+    ...makeShadow('#000', 8, 0.2, 20, 12),
   },
   startModalHeader: { alignItems: 'center', marginBottom: 20, gap: 8 },
   startModalIconBox: {

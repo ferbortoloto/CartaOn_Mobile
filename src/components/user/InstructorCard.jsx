@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../shared/Avatar';
+import { makeShadow } from '../../constants/theme';
 
 const PRIMARY = '#F59E0B';
 
@@ -69,11 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    ...makeShadow('#000', 2, 0.08, 6, 3),
   },
   photoFlex: { flexShrink: 0 },
   info: { flex: 1, gap: 3 },

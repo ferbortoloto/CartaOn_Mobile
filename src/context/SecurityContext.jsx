@@ -16,6 +16,7 @@ import React, {
   createContext, useContext, useEffect, useRef, useState, useCallback,
 } from 'react';
 import { AppState, View, Text, StyleSheet } from 'react-native';
+import { makeShadow } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -107,8 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 8, elevation: 8,
+    ...makeShadow('#000', 4, 0.2, 8, 8),
   },
   appName: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 },
   lockText: { fontSize: 14, color: 'rgba(255,255,255,0.55)', marginTop: 8 },
